@@ -1,0 +1,8 @@
+[tools]
+lua = "5.1"
+# NOTE: installing TS with mise because the version in
+# arch packages is outdated
+tree-sitter = "latest"
+ruby = "4"
+node = "26" # LTS
+java = "25" # LTS

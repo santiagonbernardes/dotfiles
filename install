@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+sudo pacman -Syu --needed --noconfirm --quiet \
+  chezmoi \
+  bitwarden-cli \
+  git \
+  terminus-font
+
+setfont ter-132b
+
+BW_SESSION="$(/usr/bin/bw login --raw)" /usr/bin/chezmoi init santiagonbernardes/ostests --apply

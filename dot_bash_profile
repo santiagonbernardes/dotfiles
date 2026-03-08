@@ -1,0 +1,7 @@
+#
+# ~/.bash_profile
+#
+
+[[ -f ~/.bashrc ]] && . ~/.bashrc
+
+uwsm check may-start && exec uwsm start hyprland.desktop

@@ -1,0 +1,3 @@
+{{- if findExecutable "spotify_player" (list "/usr/bin" ".cargo/bin") -}}
+{{- output "spotify_player" "generate" "bash" -}}
+{{- end -}}

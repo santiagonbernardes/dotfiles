@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+if gh auth status >/dev/null 2>&1; then
+  gh auth logout --hostname github.com
+fi
+
+echo {{ (bitwarden "item" "Github CLI").login.password | quote }} \
+  | gh auth login \
+     --git-protocol ssh \
+     --skip-ssh-key \
+     --with-token
+
+dotfiles_dir="{{- .chezmoi.sourceDir -}}"
+remote_url="$(git -C "$dotfiles_dir" remote get-url origin 2>/dev/null)"
+
+if [[ -z "$remote_url" || "$remote_url" != git@* ]]; then
+  ssh_url="$(gh repo view santiagonbernardes/ostests --json sshUrl --jq .sshUrl)"
+  git -C "$dotfiles_dir" remote set-url origin "$ssh_url"
+  echo "Remote switched to $ssh_url"
+fi

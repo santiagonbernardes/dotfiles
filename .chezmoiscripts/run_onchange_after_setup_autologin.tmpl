@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+{{ $template_path := joinPath .chezmoi.sourceDir ".chezmoitemplates" "autologin.conf" -}}
+# autologin.conf hash: {{ output "chezmoi" "execute-template" "-f" $template_path | sha256sum }}
+
+autologin_base_path="/etc/systemd/system/getty@tty1.service.d"
+autologin_conf_path="$autologin_base_path/autologin.conf"
+
+sudo mkdir -p "$autologin_base_path"
+
+chezmoi execute-template -f {{ $template_path | quote }} |
+  sudo tee "$autologin_conf_path" >/dev/null

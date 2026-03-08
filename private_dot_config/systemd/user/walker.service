@@ -1,0 +1,16 @@
+# NOTE: This unit was taken of the nix config
+# https://github.com/abenz1267/walker/blob/04ec7aa1b0cf2524370d99d43283c3050178a813/nix/modules/home-manager.nix#L197-L220
+
+[Unit]
+Description=Walker - Application Runner
+ConditionEnvironment=WAYLAND_DISPLAY
+After=graphical-session.target elephant.service
+Requires=elephant.service
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/walker --gapplication-service
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target

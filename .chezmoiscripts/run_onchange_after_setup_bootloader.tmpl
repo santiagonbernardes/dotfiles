@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+{{ $template_path := joinPath .chezmoi.sourceDir ".chezmoitemplates" "limine.conf" -}}
+# limine.conf hash: {{ output "chezmoi" "execute-template" "-f" $template_path | sha256sum }}
+
+chezmoi execute-template -f {{ $template_path | quote }} |
+  sudo tee "/boot/limine/limine.conf" >/dev/null

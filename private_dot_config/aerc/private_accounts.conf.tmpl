@@ -1,0 +1,8 @@
+[Main]
+source-cred-cmd = bw get password aerc/gmail --raw
+outgoing-cred-cmd = bw get password aerc/gmail --raw
+source        = imaps://{{- .my_email -}}@imap.gmail.com:993
+outgoing      = smtp://{{- .my_email -}}@smtp.gmail.com:587
+default       = INBOX
+from          = {{ .my_name }} <{{ .my_email }}>
+cache-headers = true

@@ -1,0 +1,3 @@
+{{- if findExecutable "mise" (list "/usr/bin") -}}
+{{- output "mise" "completions" "bash" -}}
+{{- end -}}

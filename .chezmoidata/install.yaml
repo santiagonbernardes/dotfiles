@@ -1,0 +1,152 @@
+install:
+  packages:
+    pacman:
+      ## Base
+      - git
+      - linux-headers
+      - linux-lts-headers
+      - base-devel # yay
+      - terminus-font # vconsole
+      # NVIDIA drivers
+      - nvidia-open
+      - nvidia-open-lts
+      # TODO: https://github.com/elFarto/nvidia-vaapi-driver?tab=readme-ov-file#firefox
+      - libva-nvidia-driver
+      # Dell
+      - libsmbios
+      # Firewall
+      - ufw
+      # Audio
+      - pipewire
+      - wireplumber
+      - pipewire-pulse
+      - playerctl
+      - wiremix
+      - pipewire-libcamera
+      # Bluetooth
+      - bluez
+      - bluez-utils
+      - bluez-deprecated-tools
+      - bluetui
+      # Hyprland
+      - hyprland
+      - uwsm
+      - waybar
+      - otf-font-awesome # Icons for waybar
+      - hyprpaper
+      - hypridle
+      - hyprlock
+      - hyprshutdown
+      - xdg-desktop-portal-hyprland
+      - xdg-desktop-portal-gtk
+      - wl-clipboard
+      - noto-fonts
+      - dunst
+      - polkit
+      - hyprpolkitagent
+      - brightnessctl
+      - qt5-wayland
+      - qt6-wayland
+      - power-profiles-daemon
+      - python-gobject # for powerprofilesctl
+      - ttf-jetbrains-mono-nerd
+      - noto-fonts-emoji
+      - noto-fonts-cjk
+      - plymouth
+      - xdg-user-dirs
+      - libnotify
+      - woff2-font-awesome
+      - rofi
+      # Editor
+      - neovim
+      - ttf-jetbrains-mono-nerd
+      - lazygit
+      - clang
+      - curl
+      - fzf
+      - ripgrep
+      - fd
+      - wget
+      - unzip
+      - python-pip
+      # Terminal
+      # NOTE: # https://github.com/ghostty-org/ghostty/discussions/8899
+      - ghostty
+      - kitty
+      - less
+      - tmux
+      - man-db
+      - man-pages
+      - bash-completion
+      - tldr
+      - btop
+      - fzf
+      - starship
+      - fastfetch
+      - eza
+      - jq
+      - curl
+      - bat
+      - fd
+      - lazygit
+      - ripgrep
+      - fcitx5
+      - chezmoi
+      - w3m
+      # File Manager
+      - yazi
+      - file
+      - ffmpeg
+      - 7zip
+      - jq
+      - poppler
+      - fd
+      - ripgrep
+      - fzf
+      - zoxide
+      - resvg
+      - imagemagick
+      - file
+      - udisks2 # mount plugin dependency
+      - wl-clipboard
+      - github-cli
+      # Music
+      - spotify-player
+      # Web
+      - firefox
+      # Password Manager
+      - bitwarden-cli
+      - bitwarden
+      # VMs
+      - dnsmasq
+      - dmidecode
+      - libvirt
+      - qemu-full
+      - virt-manager
+      # Dev Env (Mise)
+      - mise
+      ## Ruby
+      # https://github.com/rbenv/ruby-build/wiki#suggested-build-environment
+      - base-devel
+      - rust
+      - libffi
+      - libyaml
+      - openssl
+      - zlib
+      ## IA tools
+      - opencode
+      ## Docker
+      - docker
+      - docker-buildx
+      - docker-compose
+      - nvidia-container-toolkit
+      - lazydocker
+      ## Screenshot
+      - grim
+      - slurp
+      ## Video player
+      - mpv
+      ## Other
+      - calibre
+      - aerc
+      - caligula

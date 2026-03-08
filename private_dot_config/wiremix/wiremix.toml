@@ -1,0 +1,30 @@
+theme = "dracula"
+
+[themes.dracula]
+default_device = { fg = "#FFB86C" }
+default_stream = { fg = "#FFB86C" }
+selector = { fg = "#FF79C6" }
+tab = { fg = "#F8F8F2" }
+tab_selected = { fg = "#FF79C6" }
+tab_marker = { fg = "#FF79C6" }
+list_more = { fg = "#6272A4" }
+node_title = { fg = "#F8F8F2" }
+node_target = { fg = "#8BE9FD" }
+volume = { fg = "#F8F8F2" }
+volume_empty = { fg = "#6272A4" }
+volume_filled = { fg = "#BD93F9" }
+meter_inactive = { fg = "#6272A4" }
+meter_active = { fg = "#50FA7B" }
+meter_overload = { fg = "#FF5555" }
+meter_center_inactive = { fg = "#6272A4" }
+meter_center_active = { fg = "#50FA7B" }
+config_device = { fg = "#F8F8F2" }
+config_profile = { fg = "#8BE9FD" }
+dropdown_icon = { fg = "#FF79C6" }
+dropdown_border = { fg = "#6272A4" }
+dropdown_item = { fg = "#F8F8F2" }
+dropdown_selected = { fg = "#FF79C6", bg = "#44475A", add_modifier = "BOLD" }
+dropdown_more = { fg = "#6272A4" }
+help_border = { fg = "#6272A4" }
+help_item = { fg = "#F8F8F2" }
+help_more = { fg = "#6272A4" }

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Spotify
+Icon=spotify
+Comment=Play music with Spotify
+Terminal=false
+Exec=ghostty -e spotify_player %U
+Type=Application
+StartupNotify=true

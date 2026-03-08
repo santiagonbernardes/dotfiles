@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+{{ $system_conf_path := joinPath .chezmoi.sourceDir "system" -}}
+{{ $locale_gen_path := joinPath $system_conf_path "locale.gen" -}}
+{{ $locale_conf_path := joinPath $system_conf_path "locale.conf" -}}
+{{ $vconsole_conf_path := joinPath $system_conf_path "vconsole.conf" -}}
+
+# locale.gen hash: {{ include $locale_gen_path | sha256sum }}
+# locale.conf hash: {{ include $locale_conf_path | sha256sum }}
+# vconsole.conf hash: {{ include $vconsole_conf_path | sha256sum }}
+
+locale_gen="/etc/locale.gen"
+locale_conf="/etc/locale.conf"
+vconsole="/etc/vconsole.conf"
+
+console_font="ter-132b"
+
+[[ "$TERM" == "linux" ]] && setfont "$console_font"
+sudo cp {{ $locale_gen_path | quote }} "$locale_gen"
+sudo cp {{ $locale_conf_path | quote }} "$locale_conf"
+sudo cp {{ $vconsole_conf_path | quote }} "$vconsole"
+sudo locale-gen

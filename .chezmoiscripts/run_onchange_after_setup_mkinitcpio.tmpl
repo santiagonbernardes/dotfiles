@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+{{ $template_path := joinPath .chezmoi.sourceDir ".chezmoitemplates" "mkinitcpio.conf" -}}
+# mkinitcpio.conf hash: {{ output "chezmoi" "execute-template" "-f" $template_path | sha256sum }}
+
+chezmoi execute-template -f {{ $template_path | quote }} |
+  sudo tee "/etc/mkinitcpio.conf" >/dev/null &&
+  sudo mkinitcpio -P
