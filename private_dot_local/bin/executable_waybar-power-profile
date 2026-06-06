@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 
-CURRENT=$(powerprofilesctl get)
-PROFILES=$(powerprofilesctl list | grep -E '^(\*| ) [a-z]' | tr -d '* :')
-MENU_OPTIONS=""
+current=$(powerprofilesctl get)
+profiles=$(powerprofilesctl list | grep -E '^(\*| ) [a-z]' | tr -d '* :')
+menu_options=""
 
-for P in $PROFILES; do
-  if [ "$P" = "$CURRENT" ]; then
-    MENU_OPTIONS+="<span color='#50FA7B'><b>$P</b></span>\n"
+for P in $profiles; do
+  if [ "$P" = "$current" ]; then
+    menu_options+="<span color='#50FA7B'><b>$P</b></span>\n"
   else
-    MENU_OPTIONS+="$P\n"
+    menu_options+="$P\n"
   fi
 done
 
-SELECTED=$(echo -e "${MENU_OPTIONS%\\n}" | rofi -dmenu -i -markup-rows -p "Power Profile")
+selected=$(echo -e "${menu_options%\\n}" | rofi -dmenu -i -markup-rows -p "Power Profile")
 
-if [ -n "$SELECTED" ]; then
-  CLEAN_SELECTED=$(echo "$SELECTED" | sed 's/<[^>]*>//g')
-  powerprofilesctl set "$CLEAN_SELECTED"
+if [ -n "$selected" ]; then
+  clean_selected=$(echo "$selected" | sed 's/<[^>]*>//g')
+  powerprofilesctl set "$clean_selected"
 fi

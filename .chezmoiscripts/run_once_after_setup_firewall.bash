@@ -6,10 +6,17 @@ if ! command -v ufw-docker &>/dev/null; then
   sudo chmod +x /usr/local/bin/ufw-docker
 fi
 
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw-docker install
 sudo ufw enable
 
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+sudo ufw route allow in on virbr0
+sudo ufw route allow out on virbr0
+sudo ufw allow in on virbr0
+
+sudo ufw-docker install
+
+sudo systemctl restart ufw.service
 sudo systemctl enable \
   ufw.service

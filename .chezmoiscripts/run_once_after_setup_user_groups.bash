@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
-sudo usermod -aG input "$USER"
-sudo usermod -aG docker "$USER"
-sudo usermod -aG libvirt,libvirt-qemu "$USER"
+groups=(
+  "libvirt"
+  "libvirt-qemu"
+  "input"
+  "docker"
+)
+
+sudo usermod -aG "$(
+  IFS=,
+  echo "${groups[*]}"
+)" "$USER"

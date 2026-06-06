@@ -93,6 +93,7 @@ install:
       - fcitx5
       - chezmoi
       - w3m
+      - usage
       # File Manager
       - yazi
       - file
