@@ -147,6 +147,8 @@ install:
       - slurp
       ## Video player
       - mpv
+      ## Infrastructure
+      - ansible
       ## Other
       - calibre
       - aerc

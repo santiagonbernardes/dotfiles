@@ -5,3 +5,4 @@ private_dot_config/yazi/plugins
 archinstall
 system
 install
+ansible
