@@ -1,0 +1,57 @@
+---
+- name: Configure localization
+  hosts: workstation
+  become: true
+
+  vars:
+    src: files/localization
+    dest: /etc
+
+  handlers:
+    - import_tasks: handlers/services.yml
+    - name: generates localization
+      command: locale-gen
+
+  tasks:
+    - name: Ensure configuration files copied
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: root
+        group: root
+        mode: 0644
+      loop:
+        - { src: "{{ src }}/locale.gen", dest: "{{ dest }}/locale.gen" }
+        - { src: "{{ src }}/locale.conf", dest: "{{ dest }}/locale.conf" }
+      notify:
+        - generates localization
+        - restart locale
+
+---
+- name: Vconsole configuration
+  hosts: workstation
+  become: true
+
+  handlers:
+    - import_tasks: handlers/services.yml
+
+  pre_tasks:
+    - name: Ensure updated cache
+      community.general.pacman:
+        update_cache: true
+
+  tasks:
+    - name: Ensure font installed
+      community.general.pacman:
+        name: terminus-font
+        state: present
+
+    - name: Ensure configuration files copied
+      copy:
+        src: files/vconsole/vconsole.conf
+        dest: /etc/vconsole.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify:
+        - restart locale

@@ -1,0 +1,12 @@
+---
+- name: Setup for bootstraping hosts
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Scan and add host key to known_hosts
+      local_action: known_hosts
+      args:
+        name: "{{ inventory_hostname }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -q -t ed25519 ' + inventory_hostname) }}"
+        state: present
