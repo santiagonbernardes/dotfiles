@@ -134,6 +134,11 @@ install:
       - libyaml
       - openssl
       - zlib
+      ## Python
+      # https://github.com/pyenv/pyenv/wiki#suggested-build-environmenthttps://github.com/pyenv/pyenv/wiki#suggested-build-environment
+      - xz
+      - tk
+      - zstd
       ## IA tools
       - opencode
       ## Docker

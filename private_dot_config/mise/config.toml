@@ -4,5 +4,8 @@ lua = "5.1"
 # arch packages is outdated
 tree-sitter = "latest"
 ruby = "4"
-node = "26" # LTS
-java = "25" # LTS
+node = "26"            # LTS
+java = "25"            # LTS
+
+[settings]
+python.uv_venv_auto = "create|source"
