@@ -1,0 +1,14 @@
+---
+audio_packages:
+  - pipewire
+  - wireplumber
+  - pipewire-pulse
+  - playerctl
+  - wiremix
+  - pipewire-libcamera
+
+audio_user_services:
+  - pipewire
+  - pipewire-pulse
+  - wireplumber
+  - playerctld

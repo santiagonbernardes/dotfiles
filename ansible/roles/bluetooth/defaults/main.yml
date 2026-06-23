@@ -1,0 +1,6 @@
+---
+bluetooth_packages:
+  - bluez
+  - bluez-utils
+  # - bluez-deprecated-tools
+  - bluetui

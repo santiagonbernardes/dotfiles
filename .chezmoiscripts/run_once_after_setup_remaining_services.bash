@@ -5,10 +5,6 @@ sudo systemctl enable \
   docker.service
 
 systemctl --user enable \
-  pipewire.service \
-  pipewire-pulse.service \
-  wireplumber.service \
-  playerctld.service \
   waybar.service \
   hyprpaper.service \
   hypridle.service \

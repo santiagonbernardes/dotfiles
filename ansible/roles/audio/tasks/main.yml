@@ -1,0 +1,37 @@
+---
+- name: Install drivers
+  ansible.builtin.package:
+    name: "{{ audio_packages }}"
+    state: present
+  become: true
+
+- name: Ensures playerctld directory exists
+  ansible.builtin.file:
+    path: "{{ audio_playerctld_path }}"
+    state: directory
+    owner: "{{ ansible_facts['user_uid'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
+    mode: "0700"
+  notify:
+    - service daemon reload (user)
+
+- name: Copies playerctld service
+  ansible.builtin.copy:
+    src: playerctld.service
+    dest: "{{ audio_playerctld_path }}/playerctld.service"
+    owner: "{{ ansible_facts['user_uid'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
+    mode: "0644"
+  notify:
+    - service daemon reload (user)
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Start audio services and enable them
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+    scope: user
+  loop: "{{ audio_user_services }}"

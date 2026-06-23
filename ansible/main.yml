@@ -9,6 +9,8 @@
       ansible.builtin.package:
         update_cache: true
       become: true
+      register: refresh_output
+      changed_when: false
 
   roles:
     - bootloader
@@ -17,3 +19,4 @@
     - initramfs
     - localization
     - vconsole
+    - audio
