@@ -6,3 +6,4 @@ archinstall
 system
 install
 ansible
+Vagrantfile

@@ -1,0 +1,6 @@
+---
+- name: Ensure system fonts are installed
+  ansible.builtin.package:
+    name: "{{ fonts_packages }}"
+    state: present
+  become: true

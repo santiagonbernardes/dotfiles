@@ -5,7 +5,8 @@
 
   tasks:
     - name: Scan and add host key to known_hosts
-      local_action: known_hosts
+      ansible.builtin.known_hosts:
+      delegate_to: localhost
       args:
         name: "{{ inventory_hostname }}"
         key: "{{ lookup('pipe', 'ssh-keyscan -q -t ed25519 ' + inventory_hostname) }}"

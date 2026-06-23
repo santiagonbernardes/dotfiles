@@ -1,0 +1,27 @@
+---
+- name: Get LUKS partition UUID
+  ansible.builtin.command:
+    cmd: blkid -l -t TYPE=crypto_LUKS -s PARTUUID -o value
+  register: bootloader_blkid_output
+  changed_when: false
+  failed_when: bootloader_blkid_output.rc != 0
+
+- name: Print returned UUID
+  ansible.builtin.debug:
+    msg: "LUKS partition UUID is {{ bootloader_blkid_output.stdout }}"
+    verbosity: 1
+
+- name: Assert on partition UUID
+  ansible.builtin.assert:
+    that:
+      - bootloader_blkid_output.stdout != ""
+    fail_msg: Couldn't get LUKS partition UUID. Is the disk correctly encrypted?
+
+- name: Copy bootloader entries
+  ansible.builtin.template:
+    src: limine.conf.j2
+    dest: /boot/limine/limine.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true

@@ -1,0 +1,19 @@
+# vim:set ft=yaml.ansible:
+
+---
+- name: Sets up workstation
+  hosts: workstation
+
+  pre_tasks:
+    - name: Refresh package manager cache
+      ansible.builtin.package:
+        update_cache: true
+      become: true
+
+  roles:
+    - bootloader
+    - fonts
+    - gpu
+    - initramfs
+    - localization
+    - vconsole

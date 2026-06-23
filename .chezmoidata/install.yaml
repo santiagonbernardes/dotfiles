@@ -3,15 +3,15 @@ install:
     pacman:
       ## Base
       - git
-      - linux-headers
-      - linux-lts-headers
+      # - linux-headers
+      # - linux-lts-headers
       - base-devel # yay
-      - terminus-font # vconsole
+      # - terminus-font # vconsole
       # NVIDIA drivers
-      - nvidia-open
-      - nvidia-open-lts
+      # - nvidia-open
+      # - nvidia-open-lts
       # TODO: https://github.com/elFarto/nvidia-vaapi-driver?tab=readme-ov-file#firefox
-      - libva-nvidia-driver
+      # - libva-nvidia-driver
       # Dell
       - libsmbios
       # Firewall
@@ -32,7 +32,7 @@ install:
       - hyprland
       - uwsm
       - waybar
-      - otf-font-awesome # Icons for waybar
+      # - otf-font-awesome # Icons for waybar
       - hyprpaper
       - hypridle
       - hyprlock
@@ -40,7 +40,7 @@ install:
       - xdg-desktop-portal-hyprland
       - xdg-desktop-portal-gtk
       - wl-clipboard
-      - noto-fonts
+      # - noto-fonts
       - dunst
       - polkit
       - hyprpolkitagent
@@ -49,17 +49,17 @@ install:
       - qt6-wayland
       - power-profiles-daemon
       - python-gobject # for powerprofilesctl
-      - ttf-jetbrains-mono-nerd
-      - noto-fonts-emoji
-      - noto-fonts-cjk
+      # - ttf-jetbrains-mono-nerd
+      # - noto-fonts-emoji
+      # - noto-fonts-cjk
       - plymouth
       - xdg-user-dirs
       - libnotify
-      - woff2-font-awesome
+      # - woff2-font-awesome
       - rofi
       # Editor
       - neovim
-      - ttf-jetbrains-mono-nerd
+      # - ttf-jetbrains-mono-nerd
       - lazygit
       - clang
       - curl

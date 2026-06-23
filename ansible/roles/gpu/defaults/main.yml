@@ -1,0 +1,11 @@
+---
+gpu_packages:
+  - linux-headers
+  - linux-lts-headers
+  - dkms
+  - nvidia-utils
+  - nvidia-open-dkms
+  - vdpauinfo
+  - linux-firmware-intel
+  - mesa
+  - intel-media-driver
