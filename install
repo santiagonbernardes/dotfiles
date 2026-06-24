@@ -1,11 +1,90 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-sudo pacman -Syu --needed --noconfirm --quiet \
-  chezmoi \
-  bitwarden-cli \
-  git \
-  terminus-font
+import os
+import subprocess
+import sys
+import pwd
 
-setfont ter-132b
+PACKAGES: list[str] = ["bitwarden-cli", "ansible", "git"]
+BW_ENV_VAR: str = "BW_SESSION"
+HOME: str = pwd.getpwnam(os.environ["SUDO_USER"]).pw_dir
+REPOSITORY: str = "https://github.com/santiagonbernardes/ostests.git"
+DESTINATION: str = f"{HOME}/.local/share/management"
+BRANCH: str = "ansible"
 
-BW_SESSION="$(/usr/bin/bw login --raw)" /usr/bin/chezmoi init santiagonbernardes/ostests --apply
+
+def _ensure_root() -> None:
+    if os.geteuid() != 0:
+        print("This script needs sudo privileges", file=sys.stderr)
+
+
+def _install() -> None:
+    subprocess.run(
+        [
+            "/usr/bin/ansible-playbook",
+            "main.yml",
+            "--become-user",
+            f"{os.environ['SUDO_USER']}",
+        ],
+        check=True,
+        cwd=f"{DESTINATION}/ansible",
+    )
+
+
+def _ensure_packages() -> None:
+    subprocess.run(
+        ["pacman", "-Sy", "--needed", "--noconfirm", "--quiet", *PACKAGES],
+        check=True,
+    )
+
+
+def _ensure_environment() -> None:
+    bw_session: str | None = os.getenv(BW_ENV_VAR)
+
+    if bw_session:
+        return
+
+    result = subprocess.run(
+        ["/usr/bin/bw", "login", "--raw"],
+        check=False,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+
+    if result.returncode != 0:
+        result = subprocess.run(
+            ["/usr/bin/bw", "unlock", "--raw"],
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        )
+
+    os.environ[BW_ENV_VAR] = result.stdout.strip()
+
+
+def _clone_repo() -> None:
+    subprocess.run(
+        ["git", "clone", REPOSITORY, DESTINATION],
+        check=True,
+    )
+
+    subprocess.run(
+        ["git", "switch", BRANCH],
+        cwd=DESTINATION,
+        check=True,
+    )
+
+
+if __name__ == "__main__":
+    try:
+        _ensure_root()
+        _ensure_packages()
+        _ensure_environment()
+        _clone_repo()
+        _install()
+    except subprocess.CalledProcessError as e:
+        print(
+            f"Command failed with exit code {e.returncode} and error {e.stderr}",
+            file=sys.stderr,
+        )
+        sys.exit(e.returncode)

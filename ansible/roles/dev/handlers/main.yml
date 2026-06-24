@@ -1,0 +1,12 @@
+---
+- name: Service daemon reload (system)
+  ansible.builtin.service:
+    daemon_reload: true
+  become: true
+  listen: service daemon reload (system)
+
+- name: Service daemon reload (user)
+  ansible.builtin.service:
+    daemon_reload: true
+    scope: user
+  listen: service daemon reload (user)

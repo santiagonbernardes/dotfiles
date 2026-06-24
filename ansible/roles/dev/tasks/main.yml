@@ -1,0 +1,10 @@
+---
+- name: Install packages
+  ansible.builtin.package:
+    name: "{{ dev_packages }}"
+    state: present
+  become: true
+
+- name: Setup github-cli
+  ansible.builtin.import_tasks:
+    file: github-cli.yml

@@ -1,0 +1,57 @@
+---
+dev_packages:
+  - git
+  - neovim
+  - lazygit
+  - clang
+  - curl
+  - zoxide
+  - fzf
+  - ripgrep
+  - fd
+  - wget
+  - unzip
+  - python-pip
+  - ghostty
+  - kitty # fallback
+  - less
+  - tmux
+  - man-db
+  - man-pages
+  - bash-completion
+  - tldr
+  - btop
+  - fzf
+  - starship
+  - eza
+  - jq
+  - curl
+  - bat
+  - fd
+  - lazygit
+  - ripgrep
+  # NOTE: # https://github.com/ghostty-org/ghostty/discussions/8899
+  - fcitx5
+  - usage
+  - github-cli
+  - opencode
+  # Mise
+  - mise
+  ## Ruby
+  # https://github.com/rbenv/ruby-build/wiki#suggested-build-environment
+  - base-devel
+  - rust
+  - libffi
+  - libyaml
+  - openssl
+  - zlib
+  ## Python
+  # https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+  - base-devel
+  - openssl
+  - zlib
+  - xz
+  - tk
+  - zstd
+  - ansible
+  - bitwarden-cli

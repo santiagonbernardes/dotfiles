@@ -22,9 +22,15 @@ desktop_packages:
   - libnotify
   - rofi
   - firefox
-  - kitty
+  - ghostty # TUIs
+  - kitty # fallback
+  - bitwarden
+  - calibre
+  - aerc
+  - caligula
 
-  # File Manager and its dependencies
+  # NOTE: File Manager (TUI) and its dependencies
+  # https://yazi-rs.github.io/docs/installation/
   - yazi
   - file
   - ffmpeg
@@ -41,6 +47,13 @@ desktop_packages:
   - udisks2 # mount plugin dependency
   - wl-clipboard
   - github-cli
+
+  ## Screenshot
+  - grim
+  - slurp
+
+  ## Video player
+  - mpv
 
 desktop_user_services:
   - hyprpaper

@@ -1,0 +1,19 @@
+# NOTE: I'm not using the recommended PIDFile because this deamon does not
+# set it yet.
+# https://github.com/aome510/spotify-player/blob/f7b404804822be50bc237e0dcdacf1f43704988b/spotify_player/src/main.rs#L292
+
+[Unit]
+Description=Spotify Daemon
+After=pipewire.service wireplumber.service pipewire-pulse.service network-online.target
+Wants=network-online.target
+
+[Service]
+# If it's not forking, it does not work.
+Type=forking
+# PIDFile=?
+ExecStart=/usr/bin/spotify_player --daemon
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

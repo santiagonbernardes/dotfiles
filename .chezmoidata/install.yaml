@@ -2,55 +2,12 @@ install:
   packages:
     pacman:
       ## Base
-      - git
       - base-devel # yay
       # Dell
       - libsmbios
       # Firewall
       - ufw
-      # Editor
-      - neovim
-      # - ttf-jetbrains-mono-nerd
-      - lazygit
-      - clang
-      - curl
-      - fzf
-      - ripgrep
-      - fd
-      - wget
-      - unzip
-      - python-pip
-      # Terminal
-      # NOTE: # https://github.com/ghostty-org/ghostty/discussions/8899
-      - ghostty
-      - kitty
-      - less
-      - tmux
-      - man-db
-      - man-pages
-      - bash-completion
-      - tldr
-      - btop
-      - fzf
-      - starship
-      - fastfetch
-      - eza
-      - jq
-      - curl
-      - bat
-      - fd
-      - lazygit
-      - ripgrep
-      - fcitx5
-      - chezmoi
-      - w3m
-      - usage
-      - github-cli
-
-      # Music
       # Password Manager
-      - bitwarden-cli
-      - bitwarden
       # VMs
       - dnsmasq
       - dmidecode
@@ -58,36 +15,13 @@ install:
       - qemu-full
       - virt-manager
       # Dev Env (Mise)
-      - mise
-      ## Ruby
-      # https://github.com/rbenv/ruby-build/wiki#suggested-build-environment
-      - base-devel
-      - rust
-      - libffi
-      - libyaml
-      - openssl
-      - zlib
-      ## Python
-      # https://github.com/pyenv/pyenv/wiki#suggested-build-environmenthttps://github.com/pyenv/pyenv/wiki#suggested-build-environment
-      - xz
-      - tk
-      - zstd
       ## IA tools
-      - opencode
       ## Docker
       - docker
       - docker-buildx
       - docker-compose
       - nvidia-container-toolkit
       - lazydocker
-      ## Screenshot
-      - grim
-      - slurp
-      ## Video player
-      - mpv
       ## Infrastructure
-      - ansible
       ## Other
-      - calibre
-      - aerc
-      - caligula
+  # - chezmoi
