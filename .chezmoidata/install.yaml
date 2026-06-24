@@ -3,60 +3,11 @@ install:
     pacman:
       ## Base
       - git
-      # - linux-headers
-      # - linux-lts-headers
       - base-devel # yay
-      # - terminus-font # vconsole
-      # NVIDIA drivers
-      # - nvidia-open
-      # - nvidia-open-lts
-      # TODO: https://github.com/elFarto/nvidia-vaapi-driver?tab=readme-ov-file#firefox
-      # - libva-nvidia-driver
       # Dell
       - libsmbios
       # Firewall
       - ufw
-      # Audio
-      - pipewire
-      - wireplumber
-      - pipewire-pulse
-      - playerctl
-      - wiremix
-      - pipewire-libcamera
-      # Bluetooth
-      - bluez
-      - bluez-utils
-      - bluez-deprecated-tools
-      - bluetui
-      # Hyprland
-      - hyprland
-      - uwsm
-      - waybar
-      # - otf-font-awesome # Icons for waybar
-      - hyprpaper
-      - hypridle
-      - hyprlock
-      - hyprshutdown
-      - xdg-desktop-portal-hyprland
-      - xdg-desktop-portal-gtk
-      - wl-clipboard
-      # - noto-fonts
-      - dunst
-      - polkit
-      - hyprpolkitagent
-      - brightnessctl
-      - qt5-wayland
-      - qt6-wayland
-      - power-profiles-daemon
-      - python-gobject # for powerprofilesctl
-      # - ttf-jetbrains-mono-nerd
-      # - noto-fonts-emoji
-      # - noto-fonts-cjk
-      - plymouth
-      - xdg-user-dirs
-      - libnotify
-      # - woff2-font-awesome
-      - rofi
       # Editor
       - neovim
       # - ttf-jetbrains-mono-nerd
@@ -94,27 +45,9 @@ install:
       - chezmoi
       - w3m
       - usage
-      # File Manager
-      - yazi
-      - file
-      - ffmpeg
-      - 7zip
-      - jq
-      - poppler
-      - fd
-      - ripgrep
-      - fzf
-      - zoxide
-      - resvg
-      - imagemagick
-      - file
-      - udisks2 # mount plugin dependency
-      - wl-clipboard
       - github-cli
+
       # Music
-      - spotify-player
-      # Web
-      - firefox
       # Password Manager
       - bitwarden-cli
       - bitwarden

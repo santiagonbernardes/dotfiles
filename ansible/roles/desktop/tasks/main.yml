@@ -1,0 +1,36 @@
+---
+- name: Install packages
+  ansible.builtin.package:
+    name: "{{ desktop_packages }}"
+    state: present
+  notify:
+    - "audio : service daemon reload (user)"
+    - service daemon reload (system)
+  become: true
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure services are configured
+  ansible.builtin.import_tasks:
+    file: services.yml
+
+- name: Ensure XDG directories
+  ansible.builtin.command:
+    cmd: xdg-user-dirs-update
+    creates: "{{ ansible_facts['user_dir'] }}/.config/user-dirs.dirs"
+
+- name: Get current default web browser
+  ansible.builtin.command:
+    cmd: xdg-settings get default-web-browser
+  register: desktop_current_browser_output
+  changed_when: false
+  failed_when: desktop_current_browser_output.rc != 0
+
+- name: Set default web browser
+  ansible.builtin.command:
+    cmd: xdg-settings set default-web-browser {{ default_web_browser }}
+  register: desktop_set_default_ouput
+  when:
+    - desktop_current_browser_output.stdout | trim != desktop_default_browser_entry
+  changed_when: desktop_current_browser_output.rc != 0

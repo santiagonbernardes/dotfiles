@@ -14,7 +14,7 @@
 - name: Assert on partition UUID
   ansible.builtin.assert:
     that:
-      - bootloader_blkid_output.stdout != ""
+      - bootloader_blkid_output.stdout | trim != ""
     fail_msg: Couldn't get LUKS partition UUID. Is the disk correctly encrypted?
 
 - name: Copy bootloader entries

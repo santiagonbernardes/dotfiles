@@ -7,7 +7,7 @@
 
 - name: Ensures playerctld directory exists
   ansible.builtin.file:
-    path: "{{ audio_playerctld_path }}"
+    path: "{{ audio_systemd_user_path }}"
     state: directory
     owner: "{{ ansible_facts['user_uid'] }}"
     group: "{{ ansible_facts['user_gid'] }}"
@@ -17,11 +17,12 @@
 
 - name: Copies playerctld service
   ansible.builtin.copy:
-    src: playerctld.service
-    dest: "{{ audio_playerctld_path }}/playerctld.service"
+    src: "{{ item }}"
+    dest: "{{ audio_systemd_user_path }}/{{ item }}"
     owner: "{{ ansible_facts['user_uid'] }}"
     group: "{{ ansible_facts['user_gid'] }}"
     mode: "0644"
+  loop: "{{ audio_user_services_files }}"
   notify:
     - service daemon reload (user)
 

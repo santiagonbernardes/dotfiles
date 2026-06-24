@@ -1,0 +1,57 @@
+---
+desktop_packages:
+  - hyprland
+  - uwsm
+  - waybar
+  - hyprpaper
+  - hypridle
+  - hyprlock
+  - hyprshutdown
+  - xdg-desktop-portal-hyprland
+  - xdg-desktop-portal-gtk
+  - wl-clipboard
+  - dunst
+  - polkit
+  - hyprpolkitagent
+  - brightnessctl
+  - qt5-wayland
+  - qt6-wayland
+  - power-profiles-daemon
+  - python-gobject # for powerprofilesctl
+  - xdg-user-dirs
+  - libnotify
+  - rofi
+  - firefox
+  - kitty
+
+  # File Manager and its dependencies
+  - yazi
+  - file
+  - ffmpeg
+  - 7zip
+  - jq
+  - poppler
+  - fd
+  - ripgrep
+  - fzf
+  - zoxide
+  - resvg
+  - imagemagick
+  - file
+  - udisks2 # mount plugin dependency
+  - wl-clipboard
+  - github-cli
+
+desktop_user_services:
+  - hyprpaper
+  - hypridle
+  - hyprpolkitagent
+  - spotify
+
+desktop_user_session_services:
+  - waybar
+
+desktop_system_services:
+  - power-profiles-daemon
+
+desktop_default_browser_entry: firefox.desktop

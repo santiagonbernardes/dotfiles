@@ -6,9 +6,15 @@ audio_packages:
   - playerctl
   - wiremix
   - pipewire-libcamera
+  - spotify-player
+
+audio_user_services_files:
+  - playerctld.service
+  - spotify.service
 
 audio_user_services:
   - pipewire
   - pipewire-pulse
   - wireplumber
   - playerctld
+  - spotify
