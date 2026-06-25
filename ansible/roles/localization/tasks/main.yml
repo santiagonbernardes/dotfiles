@@ -13,3 +13,6 @@
     - generates localization
     - restart locale
   become: true
+
+- name: Make sure localization is set
+  ansible.builtin.meta: flush_handlers

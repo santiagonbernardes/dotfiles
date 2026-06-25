@@ -3,6 +3,7 @@
   ansible.builtin.command:
     cmd: mkinitcpio -P
   register: initramfs_regen_output
-  changed_when: initramfs_regen_output.rc != 0
+  changed_when: false
+  failed_when: initramfs_regen_output.rc != 0
   become: true
   listen: regenerate initramfs
