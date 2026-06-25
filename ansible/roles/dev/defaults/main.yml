@@ -1,4 +1,6 @@
 ---
+dev_repo_name: ostests
+
 dev_packages:
   - git
   - neovim

@@ -21,3 +21,5 @@
     - vconsole
     - audio
     - desktop
+    - dev
+    - autologin

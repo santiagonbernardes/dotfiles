@@ -8,8 +8,15 @@
   register: dev_ssh_url
   changed_when: false
 
+- name: Debug
+  ansible.builtin.debug:
+    msg: "SSH url is: {{ dev_ssh_url.stdout }}"
+    verbosity: 1
+
 - name: Ensure SSH origin
   community.general.git_config:
-    repo: "{{ ansible_facts['playbook_dir'] }}"
+    repo: "{{ inventory_dir | dirname }}"
     name: remote.origin.url
-    value: "{{ dev_ssh_url }} | trim"
+    value: "{{ dev_ssh_url.stdout | trim }}"
+    scope: local
+    state: present

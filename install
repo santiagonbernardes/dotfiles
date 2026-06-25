@@ -3,19 +3,13 @@
 import os
 import subprocess
 import sys
-import pwd
+from pathlib import Path
 
 PACKAGES: list[str] = ["bitwarden-cli", "ansible", "git"]
 BW_ENV_VAR: str = "BW_SESSION"
-HOME: str = pwd.getpwnam(os.environ["SUDO_USER"]).pw_dir
 REPOSITORY: str = "https://github.com/santiagonbernardes/ostests.git"
-DESTINATION: str = f"{HOME}/.local/share/management"
+DESTINATION: str = str(Path.home().joinpath(".local/share/management"))
 BRANCH: str = "ansible"
-
-
-def _ensure_root() -> None:
-    if os.geteuid() != 0:
-        print("This script needs sudo privileges", file=sys.stderr)
 
 
 def _install() -> None:
@@ -23,8 +17,7 @@ def _install() -> None:
         [
             "/usr/bin/ansible-playbook",
             "main.yml",
-            "--become-user",
-            f"{os.environ['SUDO_USER']}",
+            "-K",
         ],
         check=True,
         cwd=f"{DESTINATION}/ansible",
@@ -33,7 +26,7 @@ def _install() -> None:
 
 def _ensure_packages() -> None:
     subprocess.run(
-        ["pacman", "-Sy", "--needed", "--noconfirm", "--quiet", *PACKAGES],
+        ["sudo", "pacman", "-Sy", "--needed", "--noconfirm", "--quiet", *PACKAGES],
         check=True,
     )
 
@@ -63,13 +56,14 @@ def _ensure_environment() -> None:
 
 
 def _clone_repo() -> None:
+    git: str = "/usr/bin/git"
     subprocess.run(
-        ["git", "clone", REPOSITORY, DESTINATION],
+        [git, "clone", REPOSITORY, DESTINATION],
         check=True,
     )
 
     subprocess.run(
-        ["git", "switch", BRANCH],
+        [git, "switch", BRANCH],
         cwd=DESTINATION,
         check=True,
     )
@@ -77,7 +71,6 @@ def _clone_repo() -> None:
 
 if __name__ == "__main__":
     try:
-        _ensure_root()
         _ensure_packages()
         _ensure_environment()
         _clone_repo()

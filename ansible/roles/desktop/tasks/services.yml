@@ -1,5 +1,6 @@
 ---
 - name: Check whether a graphical session is available
+  # noqa command-instead-of-module
   ansible.builtin.command:
     cmd: systemctl --user show-environment
   register: desktop_user_environment

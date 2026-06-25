@@ -16,14 +16,15 @@
             lookup(
               'community.general.bitwarden',
               'Github CLI',
-              field='password'
-            )
+              field='password',
+              result_count=1
+            ) | first
           }}
       no_log: true
 
     - name: Login to GitHub CLI
       ansible.builtin.command:
         cmd: gh auth login --git-protocol ssh --skip-ssh-key --with-token
-        stdin: "{{ dev_github_token }}"
+        stdin: "{{ dev_github_token | trim }}"
       no_log: true
       changed_when: false

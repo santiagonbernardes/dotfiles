@@ -2,7 +2,7 @@
 galaxy_info:
   license: MIT
   author: Santiago Bernardes
-  description: Sets up the development environment
+  description: Sets up autologin
 
   # If the issue tracker for your role is not on github, uncomment the
   # next line and provide a value
