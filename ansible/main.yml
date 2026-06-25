@@ -16,10 +16,11 @@
     - bootloader
     - fonts
     - gpu
-    - initramfs
     - localization
     - vconsole
+    - initramfs
     - audio
+    - bluetooth
     - desktop
     - dev
     - autologin
