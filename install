@@ -5,14 +5,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-PACKAGES: list[str] = ["bitwarden-cli", "ansible", "git"]
 BW_ENV_VAR: str = "BW_SESSION"
 REPOSITORY: str = "https://github.com/santiagonbernardes/ostests.git"
 DESTINATION: str = str(Path.home().joinpath(".local/share/management"))
 BRANCH: str = "ansible"
 
 
-def _install() -> None:
+def _install_ansible() -> None:
     subprocess.run(
         [
             "/usr/bin/ansible-playbook",
@@ -24,9 +23,18 @@ def _install() -> None:
     )
 
 
-def _ensure_packages() -> None:
+def _install_dotfiles() -> None:
     subprocess.run(
-        ["sudo", "pacman", "-Sy", "--needed", "--noconfirm", "--quiet", *PACKAGES],
+        ["/usr/bin/chezmoi", "init", "--apply", "--source", DESTINATION],
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+    )
+
+
+def _ensure_packages(packages: list[str]) -> None:
+    subprocess.run(
+        ["sudo", "pacman", "-Sy", "--needed", "--noconfirm", "--quiet", *packages],
         check=True,
     )
 
@@ -71,10 +79,12 @@ def _clone_repo() -> None:
 
 if __name__ == "__main__":
     try:
-        _ensure_packages()
+        _ensure_packages(["bitwarden-cli", "ansible", "git"])
         _ensure_environment()
         _clone_repo()
-        _install()
+        _install_ansible()
+        _ensure_packages(["bitwarden-cli", "chezmoi"])
+        _install_dotfiles()
     except subprocess.CalledProcessError as e:
         print(
             f"Command failed with exit code {e.returncode} and error {e.stderr}",
