@@ -3,7 +3,7 @@
 
 [keyring]
 display-name=Default keyring
-ctime={{- now | unixEpoch }}
+ctime={{ now().timestamp() | int }}
 mtime=0
 lock-on-idle=false
 lock-after=false

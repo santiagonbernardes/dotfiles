@@ -5,10 +5,10 @@
     state: present
   become: true
 
-- name: Setup github-cli
-  ansible.builtin.import_tasks:
-    file: github-cli.yml
-
-- name: Ensure this repo uses SSH
-  ansible.builtin.import_tasks:
-    file: set-ssh-repo.yml
+# - name: Setup github-cli
+#   ansible.builtin.import_tasks:
+#     file: github-cli.yml
+#
+# - name: Ensure this repo uses SSH
+#   ansible.builtin.import_tasks:
+#     file: set-ssh-repo.yml

@@ -1,5 +1,5 @@
-{{- $my_name := promptStringOnce . "name" "Git Name" -}}
-{{- $my_email := promptStringOnce . "email" "Git Email" -}}
+{{- $my_name := promptStringOnce . "name" "Git Name" "changeme" -}}
+{{- $my_email := promptStringOnce . "email" "Git Email" "changeme@email.com" -}}
 
 [bitwarden]
   unlock = "auto"

@@ -1,0 +1,30 @@
+---
+- name: Install drivers
+  ansible.builtin.package:
+    name: "{{ audio_packages }}"
+    state: present
+  become: true
+
+- name: Ensures keyrings directory exists
+  ansible.builtin.file:
+    path: "{{ keyring_dir }}"
+    state: directory
+    owner: "{{ ansible_facts['user_uid'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
+    mode: "0700"
+
+- name: Copies default file
+  ansible.builtin.copy:
+    src: "default"
+    dest: "{{ keyring_dir }}/default"
+    owner: "{{ ansible_facts['user_uid'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
+    mode: "0644"
+
+- name: Copies default keyring template
+  ansible.builtin.template:
+    src: "Default_keyring.keyring.j2"
+    dest: "{{ keyring_dir }}/Default_keyring.keyring"
+    owner: "{{ ansible_facts['user_uid'] }}"
+    group: "{{ ansible_facts['user_gid'] }}"
+    mode: "0644"

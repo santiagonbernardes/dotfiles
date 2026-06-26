@@ -9,18 +9,17 @@
       ansible.builtin.package:
         update_cache: true
       become: true
-      register: refresh_output
-      changed_when: false
 
   roles:
-    - bootloader
-    - fonts
-    - gpu
-    - localization
-    - vconsole
-    - initramfs
-    - audio
-    - bluetooth
-    - desktop
-    - dev
-    - autologin
+    # - bootloader
+    # - fonts
+    # - gpu
+    # - localization
+    # - vconsole
+    # - initramfs
+    # - audio
+    # - bluetooth
+    # - desktop
+    # - dev
+    # - autologin
+    - dotfiles
