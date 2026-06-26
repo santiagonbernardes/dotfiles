@@ -1,6 +1,8 @@
 {{- $my_name := promptStringOnce . "name" "Git Name" "changeme" -}}
 {{- $my_email := promptStringOnce . "email" "Git Email" "changeme@email.com" -}}
 
+sourceDir = {{ .chezmoi.config.sourceDir | quote }}
+
 [bitwarden]
   unlock = "auto"
 
