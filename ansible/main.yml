@@ -11,15 +11,15 @@
       become: true
 
   roles:
-    # - bootloader
-    # - fonts
-    # - gpu
-    # - localization
-    # - vconsole
-    # - initramfs
-    # - audio
-    # - bluetooth
-    # - desktop
-    # - dev
-    # - autologin
+    - bootloader
+    - fonts
+    - gpu
+    - localization
+    - vconsole
+    - initramfs
+    - audio
+    - bluetooth
+    - desktop
+    - dev
+    - autologin
     - dotfiles
