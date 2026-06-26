@@ -1,0 +1,7 @@
+# NOTE: Might have to change the file /etc/libvirt/network.conf
+---
+- name: Install hardware packages
+  ansible.builtin.package:
+    name: "{{ hardware_packages }}"
+    state: present
+  become: true

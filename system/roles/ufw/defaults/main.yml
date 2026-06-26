@@ -1,0 +1,6 @@
+---
+ufw_packages:
+  - ufw
+
+ufw_default_incoming: deny
+ufw_default_outgoing: allow

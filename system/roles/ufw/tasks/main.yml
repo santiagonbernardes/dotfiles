@@ -1,0 +1,28 @@
+# NOTE: Might have to change the file /etc/libvirt/network.conf
+---
+- name: Install ufw packages
+  ansible.builtin.package:
+    name: "{{ ufw_packages }}"
+    state: present
+  become: true
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+  become: true
+
+- name: Set default rules
+  community.general.ufw:
+    default: "{{ item.policy }}"
+    direction: "{{ item.direction }}"
+  loop:
+    - { policy: "{{ ufw_default_incoming }}", direction: incoming }
+    - { policy: "{{ ufw_default_outgoing }}", direction: outgoing }
+  become: true
+
+- name: Start and enable ufw
+  ansible.builtin.service:
+    name: ufw
+    state: started
+    enabled: true
+  become: true

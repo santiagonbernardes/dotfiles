@@ -1,0 +1,49 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ vm_packages }}"
+    state: present
+  become: true
+
+- name: Start and enables docker services
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: Ensures vm groups
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ vm_groups }}"
+  become: true
+
+- name: Adds user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_facts['user_id'] }}"
+    groups: "{{ item }}"
+    append: true
+  loop: "{{ vm_groups }}"
+  become: true
+
+- name: "Allow routed traffic on {{ vm_network_interface }}"
+  community.general.ufw:
+    interface_in: "{{ vm_network_interface }}"
+    route: true
+    rule: allow
+  become: true
+
+- name: "Allow routed outgoing traffic on {{ vm_network_interface }}"
+  become: true
+  community.general.ufw:
+    interface_out: "{{ vm_network_interface }}"
+    route: true
+    rule: allow
+
+- name: "Allow incoming traffic on {{ vm_network_interface }}"
+  become: true
+  community.general.ufw:
+    interface: "{{ vm_network_interface }}"
+    direction: in
+    rule: allow

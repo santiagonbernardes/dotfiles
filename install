@@ -7,7 +7,7 @@ from pathlib import Path
 
 BW_ENV_VAR: str = "BW_SESSION"
 REPOSITORY: str = "https://github.com/santiagonbernardes/ostests.git"
-DESTINATION: str = str(Path.home().joinpath(".local/share/management"))
+DESTINATION: Path = Path.home().joinpath(".local/share/management")
 BRANCH: str = "ansible"
 
 
@@ -19,16 +19,14 @@ def _install_ansible() -> None:
             "-K",
         ],
         check=True,
-        cwd=f"{DESTINATION}/ansible",
+        cwd=str((DESTINATION / "system")),
     )
 
 
 def _install_dotfiles() -> None:
     subprocess.run(
-        ["/usr/bin/chezmoi", "init", "--apply", "--source", DESTINATION],
+        ["/usr/bin/chezmoi", "init", "--apply", "--source", str(DESTINATION)],
         check=True,
-        text=True,
-        stdout=subprocess.PIPE,
     )
 
 
@@ -65,14 +63,15 @@ def _ensure_environment() -> None:
 
 def _clone_repo() -> None:
     git: str = "/usr/bin/git"
-    subprocess.run(
-        [git, "clone", REPOSITORY, DESTINATION],
-        check=True,
-    )
+    if not DESTINATION.exists():
+        subprocess.run(
+            [git, "clone", REPOSITORY, str(DESTINATION)],
+            check=True,
+        )
 
     subprocess.run(
         [git, "switch", BRANCH],
-        cwd=DESTINATION,
+        cwd=str(DESTINATION),
         check=True,
     )
 
