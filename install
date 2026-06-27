@@ -3,90 +3,264 @@
 import os
 import subprocess
 import sys
+import time
+from enum import Enum
+from functools import cached_property
 from pathlib import Path
-
-BW_ENV_VAR: str = "BW_SESSION"
-REPOSITORY: str = "https://github.com/santiagonbernardes/ostests.git"
-DESTINATION: Path = Path.home().joinpath(".local/share/management")
-BRANCH: str = "ansible"
+from typing import Dict, Sequence, Tuple
 
 
-def _install_ansible() -> None:
-    subprocess.run(
-        [
-            "/usr/bin/ansible-playbook",
-            "main.yml",
-            "-K",
-        ],
-        check=True,
-        cwd=str((DESTINATION / "system")),
+class PMFlags(Enum):
+    CHECK_UPGRADES = "-Qu"
+    UPGRADE = "-Syu"
+    INSTALL = "-Sy"
+    CHECK_INSTALLED = "-Q"
+
+
+class PackageManagerError(Exception):
+    def __init__(self, flag: PMFlags, message: str):
+        super().__init__(f"[{flag.value}] {message}")
+
+
+class PackageManager:
+    __BASE_CMD: Sequence = (
+        "sudo",
+        "pacman",
+        "--quiet",
     )
 
+    def has_upgrades(self) -> bool:
+        return_code: int = self.__run_command(
+            PMFlags.CHECK_UPGRADES, valid_return_codes={0, 1}
+        )
 
-def _install_dotfiles() -> None:
-    subprocess.run(
-        ["/usr/bin/chezmoi", "init", "--apply", "--source", str(DESTINATION)],
-        check=True,
-    )
+        return return_code == 0
+
+    def upgrade(self) -> None:
+        self.__run_command(PMFlags.UPGRADE)
+
+    def all_packages_installed(self, packages: Sequence[str]) -> bool:
+        return_code: int = self.__run_command(
+            PMFlags.CHECK_INSTALLED, packages, valid_return_codes={0, 1}
+        )
+
+        return return_code == 0
+
+    def install_packages(self, packages: Sequence[str]) -> None:
+        self.__run_command(PMFlags.INSTALL, packages)
+
+    def __run_command(
+        self,
+        flag: PMFlags,
+        packages: Sequence[str] = (),
+        valid_return_codes: set[int] | None = None,
+    ) -> int:
+        valid_codes: set[int] = valid_return_codes or {0}
+        install_flags: Tuple[str, ...] | Tuple[()] = (
+            (
+                "--needed",
+                "--noprogressbar",
+                "--noconfirm",
+            )
+            if flag in (PMFlags.INSTALL, PMFlags.UPGRADE)
+            else ()
+        )
+
+        result: subprocess.CompletedProcess = subprocess.run(
+            (*self.__BASE_CMD, *install_flags, flag.value, *packages),
+            capture_output=True,
+            text=True,
+        )
+        print(f"command was: {' '.join(result.args)}")
+        code: int = result.returncode
+
+        if code in valid_codes:
+            return code
+
+        raise PackageManagerError(
+            flag,
+            result.stderr.strip() or result.stdout.strip(),
+        )
 
 
-def _ensure_packages(packages: list[str]) -> None:
-    subprocess.run(
-        ["sudo", "pacman", "-Sy", "--needed", "--noconfirm", "--quiet", *packages],
-        check=True,
-    )
+class PasswordManager:
+    _PACKAGES: Tuple[str, ...] = ("bitwarden-cli",)
+    _BINARY: str = "/usr/bin/bw"
+    _SESSION_ENV_KEY: str = "BW_SESSION"
 
+    def __init__(self, package_manager: PackageManager) -> None:
+        self._package_manager: PackageManager = package_manager
 
-def _ensure_environment() -> None:
-    bw_session: str | None = os.getenv(BW_ENV_VAR)
+        if not self._package_manager.all_packages_installed(self._PACKAGES):
+            self._package_manager.install_packages(self._PACKAGES)
 
-    if bw_session:
-        return
-
-    result = subprocess.run(
-        ["/usr/bin/bw", "login", "--raw"],
-        check=False,
-        text=True,
-        stdout=subprocess.PIPE,
-    )
-
-    if result.returncode != 0:
+    @cached_property
+    def session(self) -> str:
         result = subprocess.run(
-            ["/usr/bin/bw", "unlock", "--raw"],
-            check=True,
+            [self._BINARY, "login", "--raw"],
+            check=False,
             text=True,
             stdout=subprocess.PIPE,
         )
 
-    os.environ[BW_ENV_VAR] = result.stdout.strip()
+        if result.returncode != 0:
+            result = subprocess.run(
+                [self._BINARY, "unlock", "--raw"],
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+            )
+
+        return result.stdout.strip()
+
+    @property
+    def session_env_key(self) -> str:
+        return self._SESSION_ENV_KEY
 
 
-def _clone_repo() -> None:
-    git: str = "/usr/bin/git"
-    if not DESTINATION.exists():
+class Git:
+    _BINARY: str = "/usr/bin/git"
+    _PACKAGES: Tuple[str, ...] = ("git",)
+
+    def __init__(self, package_manager: PackageManager) -> None:
+        self._package_manager: PackageManager = package_manager
+
+        if not package_manager.all_packages_installed(self._PACKAGES):
+            package_manager.install_packages(self._PACKAGES)
+
+    def clone(self, repository_url: str, destination: Path | None) -> None:
+        command: Tuple[str, ...] = (self._BINARY, "clone", repository_url)
+        destination_command: Tuple[Path] | Tuple[()] = (
+            (destination,) if destination else ()
+        )
         subprocess.run(
-            [git, "clone", REPOSITORY, str(DESTINATION)],
+            (*command, *destination_command),
             check=True,
         )
 
-    subprocess.run(
-        [git, "switch", BRANCH],
-        cwd=str(DESTINATION),
-        check=True,
-    )
+    def pull(self, repo_path: Path | None = None) -> None:
+        subprocess.run([self._BINARY, "pull"], check=True, cwd=repo_path)
+
+    def switch(self, branch: str, repo_path: Path | None = None) -> None:
+        subprocess.run(
+            [self._BINARY, "switch", branch],
+            check=True,
+            cwd=repo_path,
+        )
+
+    @classmethod
+    def _path_to_string(cls, path: Path | None) -> str:
+        return str(path) if path else ""
+
+
+class Environment:
+    def __init__(self, password_manager: PasswordManager) -> None:
+        self._password_manager: PasswordManager = password_manager
+
+    def as_dict(self) -> Dict[str, str]:
+        base_env = os.environ.copy()
+        base_env[self._password_manager.session_env_key] = (
+            self._password_manager.session
+        )
+        return base_env
+
+
+class SystemAutomation:
+    _BINARY: str = "/usr/bin/ansible-playbook"
+    _PACKAGES: Tuple[str, ...] = ("bitwarden-cli", "ansible", "git")
+
+    def __init__(
+        self, package_manager: PackageManager, environment: Environment
+    ) -> None:
+        self._package_manager: PackageManager = package_manager
+        self._environment: Environment = environment
+
+        if not self._package_manager.all_packages_installed(self._PACKAGES):
+            self._package_manager.install_packages(self._PACKAGES)
+
+    def run(self, automation_path: Path):
+        subprocess.run(
+            [self._BINARY, "main.yml", "-K"],
+            check=True,
+            cwd=automation_path,
+            env=self._environment.as_dict(),
+        )
+
+
+class UserAutomation:
+    _BINARY: str = "/usr/bin/chezmoi"
+    _PACKAGES: Tuple[str, ...] = ("bitwarden-cli", "chezmoi")
+
+    def __init__(
+        self, package_manager: PackageManager, environment: Environment
+    ) -> None:
+        self._package_manager = package_manager
+        self._environment = environment
+
+        if not self._package_manager.all_packages_installed(self._PACKAGES):
+            self._package_manager.install_packages(self._PACKAGES)
+
+    def run(self, automation_path: Path) -> None:
+        subprocess.run(
+            [self._BINARY, "init", "--apply", "--source", str(automation_path)],
+            check=True,
+            env=self._environment.as_dict(),
+        )
+
+
+def upgrade_and_reboot(
+    package_manager: PackageManager, wait_for_seconds: int = 5
+) -> None:
+    package_manager.upgrade()
+    print(f"Upgrade completed, rebooting the OS in {wait_for_seconds} seconds...")
+    time.sleep(wait_for_seconds)
+    subprocess.run(["reboot"], check=True)
+
+
+def print_error(message: str) -> None:
+    print(message, file=sys.stderr)
 
 
 if __name__ == "__main__":
+    print("Starting instalation...")
+
     try:
-        _ensure_packages(["bitwarden-cli", "ansible", "git"])
-        _ensure_environment()
-        _clone_repo()
-        _install_ansible()
-        _ensure_packages(["bitwarden-cli", "chezmoi"])
-        _install_dotfiles()
-    except subprocess.CalledProcessError as e:
-        print(
-            f"Command failed with exit code {e.returncode} and error {e.stderr}",
-            file=sys.stderr,
+        package_manager: PackageManager = PackageManager()
+
+        if package_manager.has_upgrades():
+            upgrade_and_reboot(package_manager)
+
+        repository: str = "https://github.com/santiagonbernardes/ostests.git"
+        branch: str = "ansible"
+        automation_folder: str = "system"
+        destination: Path = Path.home().joinpath(".local/share/management")
+        password_manager: PasswordManager = PasswordManager(package_manager)
+        environment: Environment = Environment(password_manager)
+        git: Git = Git(package_manager)
+        system_automation: SystemAutomation = SystemAutomation(
+            package_manager, environment
         )
-        sys.exit(e.returncode)
+        user_automation: UserAutomation = UserAutomation(package_manager, environment)
+
+        if not destination.exists():
+            git.switch(branch, destination)
+            git.pull(destination)
+        else:
+            git.clone(repository, destination)
+            git.switch(branch, destination)
+
+        system_automation.run(destination / automation_folder)
+        user_automation.run(destination)
+
+        print("Installation complete")
+        sys.exit(0)
+    except subprocess.CalledProcessError as e:
+        print_error(
+            f"Command failed with exit code {e.returncode} and error {e.stderr}"
+        )
+        sys.exit(1)
+    except PackageManagerError as e:
+        print_error(
+            f"There was an error interacting with the package manager: {str(e)}"
+        )
+        sys.exit(1)
