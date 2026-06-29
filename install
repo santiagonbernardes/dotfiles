@@ -1,163 +1,211 @@
 #!/usr/bin/env python3
 
+import json
 import os
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
+from itertools import chain
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Protocol
 
 
-class PMFlags(Enum):
+@dataclass(frozen=True)
+class Config:
+    repository: str = "https://github.com/santiagonbernardes/ostests.git"
+    branch: str = "ansible"
+    automation_folder: str = "system"
+    destination: Path = Path.home() / ".local/share/management"
+    wait_for_seconds: int = 5
+
+
+class Installable(Protocol):
+    @property
+    def required_packages(self) -> tuple[str, ...]: ...
+
+
+class PackageManagerFlags(Enum):
     CHECK_UPGRADES = "-Qu"
     UPGRADE = "-Syu"
     INSTALL = "-Sy"
     CHECK_INSTALLED = "-Q"
 
 
-class PackageManagerError(Exception):
-    def __init__(self, flag: PMFlags, message: str):
-        super().__init__(f"[{flag.value}] {message}")
+class PasswordManagerStatus(Enum):
+    UNAUTHENTICATED = "unauthenticated"
+    UNLOCKED = "unlocked"
+    LOCKED = "locked"
 
 
 class PackageManager:
-    __BASE_CMD: Sequence = (
+    _BASE_CMD: tuple[str, ...] = (
         "sudo",
         "pacman",
         "--quiet",
     )
 
     def has_upgrades(self) -> bool:
-        return_code: int = self.__run_command(
-            PMFlags.CHECK_UPGRADES, valid_return_codes={0, 1}
+        return_code: int = self._run_command(
+            PackageManagerFlags.CHECK_UPGRADES, valid_return_codes={0, 1}
         )
 
         return return_code == 0
 
-    def upgrade(self) -> None:
-        self.__run_command(PMFlags.UPGRADE)
+    def install_with_system_upgrade(
+        self, installables: tuple[Installable, ...]
+    ) -> None:
+        self._run_command(
+            PackageManagerFlags.UPGRADE, self._get_unique_packages(installables)
+        )
 
-    def all_packages_installed(self, packages: Sequence[str]) -> bool:
-        return_code: int = self.__run_command(
-            PMFlags.CHECK_INSTALLED, packages, valid_return_codes={0, 1}
+    def all_packages_installed(self, installables: tuple[Installable, ...]) -> bool:
+        if not installables:
+            return True
+
+        return_code: int = self._run_command(
+            PackageManagerFlags.CHECK_INSTALLED,
+            self._get_unique_packages(installables),
+            valid_return_codes={0, 1},
         )
 
         return return_code == 0
 
-    def install_packages(self, packages: Sequence[str]) -> None:
-        self.__run_command(PMFlags.INSTALL, packages)
+    def install_packages(self, installables: tuple[Installable, ...]) -> None:
+        if installables:
+            self._run_command(
+                PackageManagerFlags.INSTALL, self._get_unique_packages(installables)
+            )
 
-    def __run_command(
+    def _run_command(
         self,
-        flag: PMFlags,
-        packages: Sequence[str] = (),
+        flag: PackageManagerFlags,
+        packages: tuple[str, ...] = (),
         valid_return_codes: set[int] | None = None,
     ) -> int:
         valid_codes: set[int] = valid_return_codes or {0}
-        install_flags: Tuple[str, ...] | Tuple[()] = (
+        install_flags: tuple[str, ...] = (
             (
                 "--needed",
                 "--noprogressbar",
                 "--noconfirm",
             )
-            if flag in (PMFlags.INSTALL, PMFlags.UPGRADE)
+            if flag in (PackageManagerFlags.INSTALL, PackageManagerFlags.UPGRADE)
             else ()
         )
 
-        result: subprocess.CompletedProcess = subprocess.run(
-            (*self.__BASE_CMD, *install_flags, flag.value, *packages),
-            capture_output=True,
-            text=True,
+        try:
+            result: subprocess.CompletedProcess = subprocess.run(
+                (*self._BASE_CMD, *install_flags, flag.value, *packages),
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            if e.returncode in valid_codes:
+                return e.returncode
+            raise
+
+        return result.returncode
+
+    def _get_unique_packages(
+        self, installables: tuple[Installable, ...]
+    ) -> tuple[str, ...]:
+        unique_packages: set[str] = set(
+            chain.from_iterable(
+                installable.required_packages for installable in installables
+            )
         )
-        print(f"command was: {' '.join(result.args)}")
-        code: int = result.returncode
 
-        if code in valid_codes:
-            return code
-
-        raise PackageManagerError(
-            flag,
-            result.stderr.strip() or result.stdout.strip(),
-        )
+        return tuple(sorted(unique_packages))
 
 
-class PasswordManager:
-    _PACKAGES: Tuple[str, ...] = ("bitwarden-cli",)
-    _BINARY: str = "/usr/bin/bw"
+class PasswordManager(Installable):
+    _PACKAGES: tuple[str, ...] = ("bitwarden-cli",)
+    _BINARY: Path = Path("/usr/bin/bw")
     _SESSION_ENV_KEY: str = "BW_SESSION"
 
-    def __init__(self, package_manager: PackageManager) -> None:
-        self._package_manager: PackageManager = package_manager
-
-        if not self._package_manager.all_packages_installed(self._PACKAGES):
-            self._package_manager.install_packages(self._PACKAGES)
-
-    @cached_property
-    def session(self) -> str:
-        result = subprocess.run(
-            [self._BINARY, "login", "--raw"],
-            check=False,
-            text=True,
-            stdout=subprocess.PIPE,
-        )
-
-        if result.returncode != 0:
-            result = subprocess.run(
-                [self._BINARY, "unlock", "--raw"],
-                check=True,
-                text=True,
-                stdout=subprocess.PIPE,
-            )
-
-        return result.stdout.strip()
+    @property
+    def required_packages(self) -> tuple[str, ...]:
+        return self._PACKAGES
 
     @property
     def session_env_key(self) -> str:
         return self._SESSION_ENV_KEY
 
+    @cached_property
+    def session(self) -> str:
+        match self._get_status():
+            case PasswordManagerStatus.UNAUTHENTICATED:
+                return self._login()
+            case PasswordManagerStatus.LOCKED:
+                return self._unlock()
+            case PasswordManagerStatus.UNLOCKED:
+                return self._from_env()
 
-class Git:
-    _BINARY: str = "/usr/bin/git"
-    _PACKAGES: Tuple[str, ...] = ("git",)
+    def _get_status(self) -> PasswordManagerStatus:
+        raw: str = self._run_command(("status",))
 
-    def __init__(self, package_manager: PackageManager) -> None:
-        self._package_manager: PackageManager = package_manager
+        try:
+            parsed: dict[str, str] = json.loads(raw)
+            return PasswordManagerStatus(parsed["status"])
+        except (ValueError, json.JSONDecodeError):
+            print(f"Bitwarden returned an inconsistent response: {raw}")
+            raise
 
-        if not package_manager.all_packages_installed(self._PACKAGES):
-            package_manager.install_packages(self._PACKAGES)
+    def _login(self) -> str:
+        return self._run_command(("login", "--raw"))
+
+    def _unlock(self) -> str:
+        return self._run_command(("unlock", "--raw"))
+
+    def _from_env(self) -> str:
+        session: str | None = os.getenv(self.session_env_key)
+        if session:
+            return session
+
+        raise Exception(f"{self.session_env_key} is not present in this env.")
+
+    def _run_command(self, params: tuple[str, ...]) -> str:
+        result: subprocess.CompletedProcess = subprocess.run(
+            (self._BINARY, *params),
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+        )
+
+        return result.stdout.strip()
+
+
+class Git(Installable):
+    _BINARY: Path = Path("/usr/bin/git")
+    _PACKAGES: tuple[str, ...] = ("git",)
+
+    @property
+    def required_packages(self) -> tuple[str, ...]:
+        return self._PACKAGES
 
     def clone(self, repository_url: str, destination: Path | None) -> None:
-        command: Tuple[str, ...] = (self._BINARY, "clone", repository_url)
-        destination_command: Tuple[Path] | Tuple[()] = (
-            (destination,) if destination else ()
-        )
-        subprocess.run(
-            (*command, *destination_command),
-            check=True,
-        )
+        args: tuple[str, ...] = (str(self._BINARY), "clone", repository_url)
+
+        if destination:
+            args = (*args, str(destination))
+
+        subprocess.run(args, check=True)
 
     def pull(self, repo_path: Path | None = None) -> None:
-        subprocess.run([self._BINARY, "pull"], check=True, cwd=repo_path)
+        subprocess.run((self._BINARY, "pull"), check=True, cwd=repo_path)
 
     def switch(self, branch: str, repo_path: Path | None = None) -> None:
-        subprocess.run(
-            [self._BINARY, "switch", branch],
-            check=True,
-            cwd=repo_path,
-        )
-
-    @classmethod
-    def _path_to_string(cls, path: Path | None) -> str:
-        return str(path) if path else ""
+        subprocess.run((self._BINARY, "switch", branch), check=True, cwd=repo_path)
 
 
 class Environment:
     def __init__(self, password_manager: PasswordManager) -> None:
         self._password_manager: PasswordManager = password_manager
 
-    def as_dict(self) -> Dict[str, str]:
+    def as_dict(self) -> dict[str, str]:
         base_env = os.environ.copy()
         base_env[self._password_manager.session_env_key] = (
             self._password_manager.session
@@ -165,102 +213,97 @@ class Environment:
         return base_env
 
 
-class SystemAutomation:
-    _BINARY: str = "/usr/bin/ansible-playbook"
-    _PACKAGES: Tuple[str, ...] = ("bitwarden-cli", "ansible", "git")
+class SystemAutomation(Installable):
+    _BINARY: Path = Path("/usr/bin/ansible-playbook")
+    _PACKAGES: tuple[str, ...] = ("bitwarden-cli", "ansible", "git")
 
-    def __init__(
-        self, package_manager: PackageManager, environment: Environment
-    ) -> None:
-        self._package_manager: PackageManager = package_manager
+    @property
+    def required_packages(self) -> tuple[str, ...]:
+        return self._PACKAGES
+
+    def __init__(self, environment: Environment) -> None:
         self._environment: Environment = environment
 
-        if not self._package_manager.all_packages_installed(self._PACKAGES):
-            self._package_manager.install_packages(self._PACKAGES)
-
-    def run(self, automation_path: Path):
+    def run(self, automation_path: Path) -> None:
         subprocess.run(
-            [self._BINARY, "main.yml", "-K"],
+            (self._BINARY, "main.yml", "-K"),
             check=True,
             cwd=automation_path,
             env=self._environment.as_dict(),
         )
 
 
-class UserAutomation:
-    _BINARY: str = "/usr/bin/chezmoi"
-    _PACKAGES: Tuple[str, ...] = ("bitwarden-cli", "chezmoi")
+class UserAutomation(Installable):
+    _BINARY: Path = Path("/usr/bin/chezmoi")
+    _PACKAGES: tuple[str, ...] = ("bitwarden-cli", "chezmoi")
 
-    def __init__(
-        self, package_manager: PackageManager, environment: Environment
-    ) -> None:
-        self._package_manager = package_manager
+    def __init__(self, environment: Environment) -> None:
         self._environment = environment
 
-        if not self._package_manager.all_packages_installed(self._PACKAGES):
-            self._package_manager.install_packages(self._PACKAGES)
+    @property
+    def required_packages(self) -> tuple[str, ...]:
+        return self._PACKAGES
 
     def run(self, automation_path: Path) -> None:
         subprocess.run(
-            [self._BINARY, "init", "--apply", "--source", str(automation_path)],
+            (self._BINARY, "init", "--apply", "--source", str(automation_path)),
             check=True,
             env=self._environment.as_dict(),
         )
-
-
-def upgrade_and_reboot(
-    package_manager: PackageManager, wait_for_seconds: int = 5
-) -> None:
-    package_manager.upgrade()
-    print(f"Upgrade completed, rebooting the OS in {wait_for_seconds} seconds...")
-    time.sleep(wait_for_seconds)
-    subprocess.run(["reboot"], check=True)
 
 
 def print_error(message: str) -> None:
     print(message, file=sys.stderr)
 
 
-if __name__ == "__main__":
-    print("Starting instalation...")
+def main() -> int:
+    print("Starting installation...")
+    config: Config = Config()
+    package_manager: PackageManager = PackageManager()
+    password_manager: PasswordManager = PasswordManager()
+    environment: Environment = Environment(password_manager)
+    git: Git = Git()
+    system_automation: SystemAutomation = SystemAutomation(environment)
+    user_automation: UserAutomation = UserAutomation(environment)
+    installables: tuple[Installable, ...] = (
+        password_manager,
+        git,
+        system_automation,
+        user_automation,
+    )
 
     try:
-        package_manager: PackageManager = PackageManager()
-
         if package_manager.has_upgrades():
-            upgrade_and_reboot(package_manager)
+            package_manager.install_with_system_upgrade(installables)
+            print(
+                f"Upgrade completed, rebooting the OS in {config.wait_for_seconds} seconds..."
+            )
+            time.sleep(config.wait_for_seconds)
+            subprocess.run(["reboot"], check=True)
+            return 0
 
-        repository: str = "https://github.com/santiagonbernardes/ostests.git"
-        branch: str = "ansible"
-        automation_folder: str = "system"
-        destination: Path = Path.home().joinpath(".local/share/management")
-        password_manager: PasswordManager = PasswordManager(package_manager)
-        environment: Environment = Environment(password_manager)
-        git: Git = Git(package_manager)
-        system_automation: SystemAutomation = SystemAutomation(
-            package_manager, environment
-        )
-        user_automation: UserAutomation = UserAutomation(package_manager, environment)
+        if not package_manager.all_packages_installed(installables):
+            package_manager.install_packages(installables)
 
-        if not destination.exists():
-            git.switch(branch, destination)
-            git.pull(destination)
+        if config.destination.exists():
+            git.switch(config.branch, config.destination)
+            git.pull(config.destination)
         else:
-            git.clone(repository, destination)
-            git.switch(branch, destination)
+            git.clone(config.repository, config.destination)
+            git.switch(config.branch, config.destination)
 
-        system_automation.run(destination / automation_folder)
-        user_automation.run(destination)
+        system_automation.run(config.destination / config.automation_folder)
+        user_automation.run(config.destination)
 
         print("Installation complete")
-        sys.exit(0)
+        return 0
     except subprocess.CalledProcessError as e:
         print_error(
             f"Command failed with exit code {e.returncode} and error {e.stderr}"
         )
-        sys.exit(1)
-    except PackageManagerError as e:
-        print_error(
-            f"There was an error interacting with the package manager: {str(e)}"
-        )
-        sys.exit(1)
+
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
