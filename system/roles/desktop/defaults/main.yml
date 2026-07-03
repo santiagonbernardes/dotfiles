@@ -59,9 +59,6 @@ desktop_user_services:
   - hyprpaper
   - hypridle
   - hyprpolkitagent
-  - spotify
-
-desktop_user_session_services:
   - waybar
 
 desktop_system_services:

@@ -6,7 +6,7 @@ galaxy_info:
   min_ansible_version: "2.2"
 
 dependencies:
-  - role: common
+  - role: terminal_emulator
   - role: gpu
   - role: audio
   - role: bluetooth

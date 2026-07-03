@@ -1,0 +1,15 @@
+---
+- name: Service daemon reload
+  ansible.builtin.service:
+    daemon_reload: true
+    scope: user
+  listen: start/enable audio services
+
+- name: Start audio services and enable them
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+    scope: user
+  loop: "{{ audio_user_services }}"
+  listen: start/enable audio services

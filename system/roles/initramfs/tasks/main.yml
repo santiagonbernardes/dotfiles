@@ -13,5 +13,4 @@
     group: root
     mode: "0644"
   become: true
-  notify:
-    - "common : regenerate initramfs"
+  notify: regenerate initramfs

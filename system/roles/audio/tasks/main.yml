@@ -12,8 +12,6 @@
     owner: "{{ ansible_facts['user_uid'] }}"
     group: "{{ ansible_facts['user_gid'] }}"
     mode: "0700"
-  notify:
-    - "common : service daemon reload (user)"
 
 - name: Copies playerctld service
   ansible.builtin.copy:
@@ -24,15 +22,4 @@
     mode: "0644"
   loop: "{{ audio_user_services_files }}"
   notify:
-    - "common : service daemon reload (user)"
-
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
-
-- name: Start audio services and enable them
-  ansible.builtin.service:
-    name: "{{ item }}"
-    state: started
-    enabled: true
-    scope: user
-  loop: "{{ audio_user_services }}"
+    - start/enable audio services

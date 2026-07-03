@@ -3,17 +3,8 @@
   ansible.builtin.package:
     name: "{{ desktop_packages }}"
     state: present
-  notify:
-    - "common : service daemon reload (user)"
-    - "common : service daemon reload (system)"
+  notify: configure services
   become: true
-
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
-
-- name: Ensure services are configured
-  ansible.builtin.import_tasks:
-    file: services.yml
 
 - name: Ensure XDG directories
   ansible.builtin.command:

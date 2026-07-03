@@ -1,0 +1,8 @@
+---
+- name: Generates localization
+  ansible.builtin.command:
+    cmd: locale-gen
+  register: localization_output
+  changed_when: localization_output.rc != 0
+  listen: generates localization
+  become: true

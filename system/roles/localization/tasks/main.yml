@@ -10,9 +10,5 @@
     - locale.conf
     - locale.gen
   notify:
-    - "common : generates localization"
-    - "common : restart locale"
+    - generates localization
   become: true
-
-- name: Make sure localization is set
-  ansible.builtin.meta: flush_handlers
