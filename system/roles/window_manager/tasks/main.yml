@@ -1,0 +1,7 @@
+---
+- name: Install window manager
+  ansible.builtin.package:
+    name: "{{ window_manager_packages }}"
+    state: present
+  notify: configure services
+  become: true
