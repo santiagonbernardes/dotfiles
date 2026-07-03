@@ -1,8 +1,0 @@
----
-galaxy_info:
-  license: MIT
-  author: Santiago Bernardes
-  description: Sets up the development environment
-  min_ansible_version: "2.2"
-
-dependencies: []
