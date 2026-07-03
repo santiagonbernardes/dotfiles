@@ -13,8 +13,10 @@ base_packages:
   - tmux
   - man-db
   - man-pages
-  - bash-completion
   - tldr
   - btop
   - eza
   - bat
+  - bash-completion
+  - usage
+  - bitwarden-cli
