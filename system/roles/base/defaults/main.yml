@@ -20,3 +20,4 @@ base_packages:
   - bash-completion
   - usage
   - bitwarden-cli
+  - polkit

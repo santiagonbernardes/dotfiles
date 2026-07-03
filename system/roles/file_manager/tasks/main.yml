@@ -1,0 +1,6 @@
+---
+- name: Install file manager
+  ansible.builtin.package:
+    name: "{{ file_manager_packages }}"
+    state: present
+  become: true

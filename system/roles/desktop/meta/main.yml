@@ -7,6 +7,7 @@ galaxy_info:
 
 dependencies:
   - role: terminal_emulator
+  - role: file_manager
   - role: gpu
   - role: audio
   - role: bluetooth

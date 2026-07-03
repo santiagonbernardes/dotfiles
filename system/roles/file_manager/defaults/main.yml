@@ -1,0 +1,19 @@
+file_manager_packages:
+  # NOTE: File Manager (TUI) and its dependencies
+  # https://yazi-rs.github.io/docs/installation/
+  - yazi
+  - file
+  - ffmpeg
+  - 7zip
+  - jq
+  - poppler
+  - fd
+  - ripgrep
+  - fzf
+  - zoxide
+  - resvg
+  - imagemagick
+  - udisks2 # mount plugin dependency
+  - wl-clipboard
+  - github-cli
+  - ttf-jetbrains-mono-nerd
