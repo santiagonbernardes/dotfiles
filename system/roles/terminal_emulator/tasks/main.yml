@@ -1,0 +1,6 @@
+---
+- name: Install terminal emulators packages
+  ansible.builtin.package:
+    name: "{{ terminal_emulators_packages }}"
+    state: present
+  become: true

@@ -1,0 +1,6 @@
+---
+terminal_emulator_packages:
+  - ghostty
+    # NOTE: # https://github.com/ghostty-org/ghostty/discussions/8899
+  - fcitx5
+  - kitty # fallback
