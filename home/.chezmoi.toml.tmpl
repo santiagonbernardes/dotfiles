@@ -1,14 +1,11 @@
-{{- $my_name := promptStringOnce . "name" "Git Name" "changeme" -}}
-{{- $my_email := promptStringOnce . "email" "Git Email" "changeme@email.com" -}}
-
 sourceDir = {{ .chezmoi.config.sourceDir | quote }}
 
 [bitwarden]
   unlock = "auto"
 
 [data]
-  my_name = {{ $my_name | quote }}
-  my_email = {{ $my_email | quote }}
+  name = {{- promptStringOnce . "name" "Git Name" "changeme" | quote }}
+  email = {{- promptStringOnce . "email" "Git Email" "changeme@email.com" | quote }}
   font = "JetBrainsMono Nerd Font"
 
 [merge]

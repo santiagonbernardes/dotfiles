@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -10,16 +12,81 @@ from enum import Enum
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
+
+
+class CommandRunner:
+    def __init__(
+        self,
+        check: bool = True,
+        text: bool = True,
+        capture_output: bool = True,
+    ) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.CommandRunner")
+        self._default_options: dict[str, bool] = {
+            "check": check,
+            "text": text,
+            "capture_output": capture_output,
+        }
+
+    def run(
+        self, command: tuple[str | Path, ...], **kwargs
+    ) -> subprocess.CompletedProcess:
+        options: dict[str, Any] = self._default_options | kwargs
+        secret_output: bool = options.pop("secret_output", False)
+
+        self._log.debug("Running command: %s", subprocess.list2cmdline(command))
+
+        start = time.perf_counter()
+
+        try:
+            result = subprocess.run(command, **options)
+        except subprocess.CalledProcessError as exc:
+            elapsed = time.perf_counter() - start
+
+            self._log.error(
+                "Command failed after %.3fs (exit code %d): %s",
+                elapsed,
+                exc.returncode,
+                subprocess.list2cmdline(command),
+            )
+            self._log_descriptors(exc, secret_output=secret_output)
+            raise
+
+        elapsed = time.perf_counter() - start
+
+        self._log.debug(
+            "Command completed in %.3fs (exit code %d): %s",
+            elapsed,
+            result.returncode,
+            subprocess.list2cmdline(command),
+        )
+
+        self._log_descriptors(result)
+
+        return result
+
+    def _log_descriptors(
+        self,
+        loggable: subprocess.CompletedProcess | subprocess.CalledProcessError,
+        secret_output: bool = False,
+    ) -> None:
+        if loggable.stdout:
+            output: str = "[SECRET]" if secret_output else loggable.stdout
+            self._log.debug("stdout: %s", output)
+
+        if loggable.stderr:
+            self._log.error("stderr: %s", loggable.stderr)
 
 
 @dataclass(frozen=True)
 class Config:
     repository: str = "https://github.com/santiagonbernardes/ostests.git"
-    branch: str = "ansible"
-    automation_folder: str = "system"
+    branch: str = "main"
+    system_automation_folder: str = "system"
     destination: Path = Path.home() / ".local/share/management"
     wait_for_seconds: int = 5
+    log_level: int = logging.INFO
 
 
 class Installable(Protocol):
@@ -47,37 +114,72 @@ class PackageManager:
         "--quiet",
     )
 
+    def __init__(self, runner: CommandRunner) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.PackageManager")
+        self._runner = runner
+
     def has_upgrades(self) -> bool:
+        self._log.debug("Checking for pending system upgrades")
         return_code: int = self._run_command(
             PackageManagerFlags.CHECK_UPGRADES, valid_return_codes={0, 1}
         )
 
-        return return_code == 0
+        has = return_code == 0
+        if has:
+            self._log.info("Pending system upgrades found")
+        else:
+            self._log.debug("No pending system upgrades")
+        return has
 
     def install_with_system_upgrade(
         self, installables: tuple[Installable, ...]
     ) -> None:
-        self._run_command(
-            PackageManagerFlags.UPGRADE, self._get_unique_packages(installables)
+        packages = self._get_unique_packages(installables)
+        self._log.info(
+            "Upgrading system and installing %d package(s): %s",
+            len(packages),
+            ", ".join(packages),
         )
+        self._run_command(PackageManagerFlags.UPGRADE, packages)
+        self._log.info("System upgrade and package installation complete")
 
     def all_packages_installed(self, installables: tuple[Installable, ...]) -> bool:
         if not installables:
+            self._log.debug("No installables provided; skipping package check")
             return True
 
+        packages = self._get_unique_packages(installables)
+        self._log.debug(
+            "Checking whether %d package(s) are installed: %s",
+            len(packages),
+            ", ".join(packages),
+        )
         return_code: int = self._run_command(
             PackageManagerFlags.CHECK_INSTALLED,
-            self._get_unique_packages(installables),
+            packages,
             valid_return_codes={0, 1},
         )
 
-        return return_code == 0
+        all_installed = return_code == 0
+        if all_installed:
+            self._log.debug("All required packages are already installed")
+        else:
+            self._log.info("One or more required packages are missing")
+        return all_installed
 
     def install_packages(self, installables: tuple[Installable, ...]) -> None:
-        if installables:
-            self._run_command(
-                PackageManagerFlags.INSTALL, self._get_unique_packages(installables)
-            )
+        if not installables:
+            self._log.debug("No installables provided; nothing to install")
+            return
+
+        packages = self._get_unique_packages(installables)
+        self._log.info(
+            "Installing %d package(s): %s",
+            len(packages),
+            ", ".join(packages),
+        )
+        self._run_command(PackageManagerFlags.INSTALL, packages)
+        self._log.info("Package installation complete")
 
     def _run_command(
         self,
@@ -97,13 +199,16 @@ class PackageManager:
         )
 
         try:
-            result: subprocess.CompletedProcess = subprocess.run(
+            result: subprocess.CompletedProcess = self._runner.run(
                 (*self._BASE_CMD, *install_flags, flag.value, *packages),
-                text=True,
-                check=True,
             )
         except subprocess.CalledProcessError as e:
             if e.returncode in valid_codes:
+                self._log.debug(
+                    "Command returned expected non-zero exit code %d for flag %s",
+                    e.returncode,
+                    flag.name,
+                )
                 return e.returncode
             raise
 
@@ -126,6 +231,10 @@ class PasswordManager(Installable):
     _BINARY: Path = Path("/usr/bin/bw")
     _SESSION_ENV_KEY: str = "BW_SESSION"
 
+    def __init__(self, runner: CommandRunner) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.PasswordManager")
+        self._runner = runner
+
     @property
     def required_packages(self) -> tuple[str, ...]:
         return self._PACKAGES
@@ -136,45 +245,63 @@ class PasswordManager(Installable):
 
     @cached_property
     def session(self) -> str:
-        match self._get_status():
+        self._log.debug("Resolving password manager session")
+        status = self._get_status()
+        self._log.debug("Password manager status: %s", status.value)
+
+        match status:
             case PasswordManagerStatus.UNAUTHENTICATED:
+                self._log.info("Password manager is unauthenticated; logging in")
                 return self._login()
             case PasswordManagerStatus.LOCKED:
+                self._log.info("Password manager is locked; unlocking")
                 return self._unlock()
             case PasswordManagerStatus.UNLOCKED:
+                self._log.debug(
+                    "Password manager is already unlocked; reading session from env"
+                )
                 return self._from_env()
 
     def _get_status(self) -> PasswordManagerStatus:
+        self._log.debug("Fetching password manager status")
         raw: str = self._run_command(("status",))
 
         try:
             parsed: dict[str, str] = json.loads(raw)
             return PasswordManagerStatus(parsed["status"])
         except (ValueError, json.JSONDecodeError):
-            print(f"Bitwarden returned an inconsistent response: {raw}")
+            self._log.error("Failed to parse password manager status output: %r", raw)
             raise
 
     def _login(self) -> str:
+        self._log.debug("Running password manager login")
         return self._run_command(("login", "--raw"))
 
     def _unlock(self) -> str:
+        self._log.debug("Running password manager unlock")
         return self._run_command(("unlock", "--raw"))
 
     def _from_env(self) -> str:
         session: str | None = os.getenv(self.session_env_key)
         if session:
+            self._log.debug(
+                "Session token retrieved from environment variable %s",
+                self.session_env_key,
+            )
             return session
 
+        self._log.error(
+            "Expected environment variable %s is not set", self.session_env_key
+        )
         raise Exception(f"{self.session_env_key} is not present in this env.")
 
     def _run_command(self, params: tuple[str, ...]) -> str:
-        result: subprocess.CompletedProcess = subprocess.run(
+        result: subprocess.CompletedProcess = self._runner.run(
             (self._BINARY, *params),
-            check=True,
-            text=True,
+            capture_output=False,
             stdout=subprocess.PIPE,
+            secret_output=True,
         )
-
         return result.stdout.strip()
 
 
@@ -182,31 +309,54 @@ class Git(Installable):
     _BINARY: Path = Path("/usr/bin/git")
     _PACKAGES: tuple[str, ...] = ("git",)
 
+    def __init__(self, runner: CommandRunner) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.Git")
+        self._runner = runner
+
     @property
     def required_packages(self) -> tuple[str, ...]:
         return self._PACKAGES
 
     def clone(self, repository_url: str, destination: Path | None) -> None:
-        args: tuple[str, ...] = (str(self._BINARY), "clone", repository_url)
+        self._log.info(
+            "Cloning repository %s into %s", repository_url, destination or "(default)"
+        )
+        args: tuple[str | Path, ...] = (self._BINARY, "clone", repository_url)
 
         if destination:
             args = (*args, str(destination))
 
-        subprocess.run(args, check=True)
+        self._runner.run(args)
+        self._log.info("Repository cloned successfully")
 
     def pull(self, repo_path: Path | None = None) -> None:
-        subprocess.run((self._BINARY, "pull"), check=True, cwd=repo_path)
+        self._log.info(
+            "Pulling latest changes in %s", repo_path or "(current directory)"
+        )
+        self._runner.run((self._BINARY, "pull"), cwd=repo_path)
+        self._log.info("Pull complete")
 
     def switch(self, branch: str, repo_path: Path | None = None) -> None:
-        subprocess.run((self._BINARY, "switch", branch), check=True, cwd=repo_path)
+        self._log.info(
+            "Switching to branch '%s' in %s",
+            branch,
+            repo_path or "(current directory)",
+        )
+        self._runner.run((self._BINARY, "switch", branch), cwd=repo_path)
+        self._log.debug("Branch switch to '%s' complete", branch)
 
 
 class Environment:
     def __init__(self, password_manager: PasswordManager) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.Environment")
         self._password_manager: PasswordManager = password_manager
 
     def as_dict(self) -> dict[str, str]:
-        base_env = os.environ.copy()
+        self._log.debug(
+            "Building environment dict, injecting %s",
+            self._password_manager.session_env_key,
+        )
+        base_env: dict[str, str] = os.environ.copy()
         base_env[self._password_manager.session_env_key] = (
             self._password_manager.session
         )
@@ -221,23 +371,36 @@ class SystemAutomation(Installable):
     def required_packages(self) -> tuple[str, ...]:
         return self._PACKAGES
 
-    def __init__(self, environment: Environment) -> None:
+    def __init__(self, runner: CommandRunner, environment: Environment) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.SystemAutomation")
+        self._runner = runner
         self._environment: Environment = environment
 
     def run(self, automation_path: Path) -> None:
-        subprocess.run(
+        if not automation_path.exists():
+            self._log.error("Automation path %s doesn't exist.")
+            raise Exception(
+                "Automation path %s doesn't exist. Is it correct? Use --system_automation_folder.",
+                automation_path,
+            )
+
+        self._log.info("Running system automation playbook in %s", automation_path)
+        self._runner.run(
             (self._BINARY, "main.yml", "-K"),
-            check=True,
             cwd=automation_path,
             env=self._environment.as_dict(),
+            capture_output=False,
         )
+        self._log.info("System automation playbook finished")
 
 
 class UserAutomation(Installable):
     _BINARY: Path = Path("/usr/bin/chezmoi")
     _PACKAGES: tuple[str, ...] = ("bitwarden-cli", "chezmoi")
 
-    def __init__(self, environment: Environment) -> None:
+    def __init__(self, runner: CommandRunner, environment: Environment) -> None:
+        self._log: logging.Logger = logging.getLogger(f"{__name__}.UserAutomation")
+        self._runner = runner
         self._environment = environment
 
     @property
@@ -245,26 +408,37 @@ class UserAutomation(Installable):
         return self._PACKAGES
 
     def run(self, automation_path: Path) -> None:
-        subprocess.run(
+        self._log.info(
+            "Running user automation (chezmoi) with source %s", automation_path
+        )
+        self._runner.run(
             (self._BINARY, "init", "--apply", "--source", str(automation_path)),
-            check=True,
+            capture_output=False,
             env=self._environment.as_dict(),
         )
+        self._log.info("User automation finished")
 
 
-def print_error(message: str) -> None:
-    print(message, file=sys.stderr)
+def main(config: Config) -> int:
+    log: logging.Logger = logging.getLogger(__name__)
+    log.info("Bootstrap starting")
 
+    log.debug(
+        "Config loaded: repository=%s branch=%s destination=%s system_automation_folder=%s wait_for_seconds=%s",
+        config.repository,
+        config.branch,
+        config.destination,
+        config.system_automation_folder,
+        config.wait_for_seconds,
+    )
 
-def main() -> int:
-    print("Starting installation...")
-    config: Config = Config()
-    package_manager: PackageManager = PackageManager()
-    password_manager: PasswordManager = PasswordManager()
+    runner: CommandRunner = CommandRunner()
+    package_manager: PackageManager = PackageManager(runner)
+    password_manager: PasswordManager = PasswordManager(runner)
     environment: Environment = Environment(password_manager)
-    git: Git = Git()
-    system_automation: SystemAutomation = SystemAutomation(environment)
-    user_automation: UserAutomation = UserAutomation(environment)
+    git: Git = Git(runner)
+    system_automation: SystemAutomation = SystemAutomation(runner, environment)
+    user_automation: UserAutomation = UserAutomation(runner, environment)
     installables: tuple[Installable, ...] = (
         password_manager,
         git,
@@ -274,36 +448,115 @@ def main() -> int:
 
     try:
         if package_manager.has_upgrades():
-            package_manager.install_with_system_upgrade(installables)
-            print(
-                f"Upgrade completed, rebooting the OS in {config.wait_for_seconds} seconds..."
+            log.warning(
+                "System upgrades are available, the system will reboot after the upgrade."
             )
+            package_manager.install_with_system_upgrade(installables)
+            log.info("Upgrade complete, rebooting in %ds.", config.wait_for_seconds)
             time.sleep(config.wait_for_seconds)
-            subprocess.run(["reboot"], check=True)
+            runner.run(("reboot",))
             return 0
 
         if not package_manager.all_packages_installed(installables):
+            log.info("Installing missing packages")
             package_manager.install_packages(installables)
 
         if config.destination.exists():
+            log.info("Repository already exists at %s; syncing", config.destination)
             git.switch(config.branch, config.destination)
             git.pull(config.destination)
         else:
+            log.info(
+                "Repository not found at %s; cloning from %s",
+                config.destination,
+                config.repository,
+            )
             git.clone(config.repository, config.destination)
             git.switch(config.branch, config.destination)
 
-        system_automation.run(config.destination / config.automation_folder)
+        log.info("Starting system automation.")
+        system_automation.run(config.destination / config.system_automation_folder)
+        log.info("System automatiom completed.")
+        log.info("Starting user automation.")
         user_automation.run(config.destination)
+        log.info("User automation finished.")
 
-        print("Installation complete")
+        log.info("Bootstrap completed successfully")
         return 0
+
     except subprocess.CalledProcessError as e:
-        print_error(
-            f"Command failed with exit code {e.returncode} and error {e.stderr}"
+        log.error(
+            "Command failed with exit code %d: %s",
+            e.returncode,
+            e.stderr,
         )
 
     return 1
 
 
+def configure_logging(log_level: int) -> None:
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s %(levelname)-8s %(name)s %(message)s",
+    )
+
+
+def parse_args() -> Config:
+    parser = argparse.ArgumentParser(
+        description="Bootstrap a system using Ansible and Chezmoi."
+    )
+
+    parser.add_argument(
+        "--repository",
+        default=Config.repository,
+        help="Git repository containing the automation.",
+    )
+
+    parser.add_argument(
+        "--branch",
+        default=Config.branch,
+        help="Git branch to checkout.",
+    )
+
+    parser.add_argument(
+        "--system-automation-folder",
+        default=Config.system_automation_folder,
+        help="Folder containing the Ansible playbook.",
+    )
+
+    parser.add_argument(
+        "--destination",
+        type=Path,
+        default=Config.destination,
+        help="Directory where the repository will be cloned.",
+    )
+
+    parser.add_argument(
+        "--wait-for-seconds",
+        type=int,
+        default=Config.wait_for_seconds,
+        help="Seconds to wait before rebooting after a system upgrade.",
+    )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug logging.",
+    )
+
+    args = parser.parse_args()
+
+    return Config(
+        repository=args.repository,
+        branch=args.branch,
+        system_automation_folder=args.system_automation_folder,
+        destination=args.destination.expanduser(),
+        wait_for_seconds=args.wait_for_seconds,
+        log_level=logging.DEBUG if args.debug else logging.INFO,
+    )
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    config: Config = parse_args()
+    configure_logging(config.log_level)
+    sys.exit(main(config))
