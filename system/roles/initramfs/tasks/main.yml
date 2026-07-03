@@ -14,4 +14,4 @@
     mode: "0644"
   become: true
   notify:
-    - regenerate initramfs
+    - "common : regenerate initramfs"

@@ -10,8 +10,8 @@
     - locale.conf
     - locale.gen
   notify:
-    - generates localization
-    - restart locale
+    - "common : generates localization"
+    - "common : restart locale"
   become: true
 
 - name: Make sure localization is set

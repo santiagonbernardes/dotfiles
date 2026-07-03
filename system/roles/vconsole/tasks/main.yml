@@ -7,5 +7,5 @@
     group: root
     mode: "0644"
   notify:
-    - "localization : restart locale"
+    - "common : restart locale"
   become: true

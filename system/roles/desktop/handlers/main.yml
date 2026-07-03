@@ -1,6 +1,0 @@
----
-- name: Service daemon reload (user)
-  ansible.builtin.service:
-    daemon_reload: true
-    scope: user
-  listen: service daemon reload (user)

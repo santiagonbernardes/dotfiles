@@ -4,8 +4,8 @@
     name: "{{ desktop_packages }}"
     state: present
   notify:
-    - "audio : service daemon reload (user)"
-    - service daemon reload (system)
+    - "common : service daemon reload (user)"
+    - "common : service daemon reload (system)"
   become: true
 
 - name: Flush handlers

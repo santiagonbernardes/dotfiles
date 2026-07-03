@@ -13,7 +13,7 @@
     group: "{{ ansible_facts['user_gid'] }}"
     mode: "0700"
   notify:
-    - service daemon reload (user)
+    - "common : service daemon reload (user)"
 
 - name: Copies playerctld service
   ansible.builtin.copy:
@@ -24,7 +24,7 @@
     mode: "0644"
   loop: "{{ audio_user_services_files }}"
   notify:
-    - service daemon reload (user)
+    - "common : service daemon reload (user)"
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
