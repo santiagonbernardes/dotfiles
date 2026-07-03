@@ -1,0 +1,6 @@
+---
+- name: Install text editors packages
+  ansible.builtin.package:
+    name: "{{ text_editor_packages }}"
+    state: present
+  become: true

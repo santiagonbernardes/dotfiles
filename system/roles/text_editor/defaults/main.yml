@@ -1,0 +1,15 @@
+---
+text_editor_packages:
+  - neovim
+  # NOTE: Lazyvim dependencies:
+  # https://www.lazyvim.org/#%EF%B8%8F-requirements
+  - git
+  - ttf-jetbrains-mono-nerd
+  - lazygit
+  - clang
+  - curl
+  - fzf
+  - ripgrep
+  - fd
+  # Mise takes care of tree-sitter-cli and luarocks
+  - mise
