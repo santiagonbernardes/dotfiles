@@ -1,0 +1,20 @@
+---
+base_packages:
+  - jq
+  - fd
+  - ripgrep
+  - fzf
+  - zoxide
+  - git
+  - github-cli
+  - curl
+  - unzip
+  - less
+  - tmux
+  - man-db
+  - man-pages
+  - bash-completion
+  - tldr
+  - btop
+  - eza
+  - bat
