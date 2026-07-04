@@ -12,6 +12,6 @@
     cmd: mkinitcpio -P
   register: initramfs_regen_output
   changed_when: false
-  failed_when: initramfs_init_regen_output.rc != 0
+  failed_when: initramfs_regen_output.rc != 0
   become: true
   listen: regenerate initramfs

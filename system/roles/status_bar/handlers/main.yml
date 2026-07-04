@@ -17,6 +17,6 @@
   ansible.builtin.service:
     name: "{{ status_bar_service }}"
     enabled: true
-    state: "{{ 'started' if desktop_graphical_session_active else omit }}"
+    state: "{{ 'started' if status_bar_graphical_session_active else omit }}"
     scope: "user"
   listen: configure services

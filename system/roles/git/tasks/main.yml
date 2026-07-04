@@ -15,7 +15,7 @@
           {{
             lookup(
               'community.general.bitwarden',
-              {{ git_bw_item_name }},
+              git_bw_item_name,
               field='password',
               result_count=1
             ) | first
