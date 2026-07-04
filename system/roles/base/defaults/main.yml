@@ -21,3 +21,4 @@ base_packages:
   - usage
   - bitwarden-cli
   - polkit
+  - starship
