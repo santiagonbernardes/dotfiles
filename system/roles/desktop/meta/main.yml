@@ -15,4 +15,3 @@ dependencies:
   - role: status_bar
   - role: text_editor
   - role: vm
-  - role: ide
