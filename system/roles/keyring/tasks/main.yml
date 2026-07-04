@@ -19,6 +19,7 @@
     dest: "{{ keyring_dir }}/default"
     owner: "{{ ansible_facts['user_uid'] }}"
     group: "{{ ansible_facts['user_gid'] }}"
+    force: false
     mode: "0644"
 
 - name: Copies default keyring template
@@ -27,4 +28,5 @@
     dest: "{{ keyring_dir }}/Default_keyring.keyring"
     owner: "{{ ansible_facts['user_uid'] }}"
     group: "{{ ansible_facts['user_gid'] }}"
+    force: false
     mode: "0644"

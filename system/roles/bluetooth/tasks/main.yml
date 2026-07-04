@@ -12,7 +12,7 @@
     persistent: present
   become: true
 
-- name: Make sure bluetoothe service is running and enabled
+- name: Make sure bluetooth service is running and enabled
   ansible.builtin.service:
     name: bluetooth
     state: started
