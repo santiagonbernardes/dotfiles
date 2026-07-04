@@ -7,12 +7,12 @@ import os
 import subprocess
 import sys
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Protocol, Self
 
 
 class CommandRunner:
@@ -76,7 +76,7 @@ class CommandRunner:
             self._log.debug("stdout: %s", output)
 
         if loggable.stderr:
-            self._log.error("stderr: %s", loggable.stderr)
+            self._log.debug("stderr: %s", loggable.stderr)
 
 
 @dataclass(frozen=True)
@@ -84,9 +84,22 @@ class Config:
     repository: str = "https://github.com/santiagonbernardes/ostests.git"
     branch: str = "main"
     system_automation_folder: str = "system"
-    destination: Path = Path.home() / ".local/share/management"
+    system_automation_file: str = "main.yml"
+    destination: Path = Path.home() / ".local/share"
     wait_for_seconds: int = 5
     log_level: int = logging.INFO
+
+    @classmethod
+    def from_args(cls, args: argparse.Namespace) -> Self:
+        return cls(
+            repository=args.repository,
+            branch=args.branch,
+            system_automation_folder=args.system_automation_folder,
+            system_automation_file=args.system_automation_file,
+            destination=args.destination.expanduser(),
+            wait_for_seconds=args.wait_for_seconds,
+            log_level=logging.DEBUG if args.debug else logging.INFO,
+        )
 
 
 class Installable(Protocol):
@@ -205,7 +218,7 @@ class PackageManager:
         except subprocess.CalledProcessError as e:
             if e.returncode in valid_codes:
                 self._log.debug(
-                    "Command returned expected non-zero exit code %d for flag %s",
+                    "Command returned expected non-zero exit code %d for flag %s and it is a valid code",
                     e.returncode,
                     flag.name,
                 )
@@ -323,10 +336,7 @@ class Git(Installable):
         )
         args: tuple[str | Path, ...] = (self._BINARY, "clone", repository_url)
 
-        if destination:
-            args = (*args, str(destination))
-
-        self._runner.run(args)
+        self._runner.run(args, cwd=destination)
         self._log.info("Repository cloned successfully")
 
     def pull(self, repo_path: Path | None = None) -> None:
@@ -423,14 +433,7 @@ def main(config: Config) -> int:
     log: logging.Logger = logging.getLogger(__name__)
     log.info("Bootstrap starting")
 
-    log.debug(
-        "Config loaded: repository=%s branch=%s destination=%s system_automation_folder=%s wait_for_seconds=%s",
-        config.repository,
-        config.branch,
-        config.destination,
-        config.system_automation_folder,
-        config.wait_for_seconds,
-    )
+    log.debug("Config loaded: %s", asdict(config))
 
     runner: CommandRunner = CommandRunner()
     package_manager: PackageManager = PackageManager(runner)
@@ -502,7 +505,7 @@ def configure_logging(log_level: int) -> None:
 
 
 def parse_args() -> Config:
-    parser = argparse.ArgumentParser(
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description="Bootstrap a system using Ansible and Chezmoi."
     )
 
@@ -525,6 +528,12 @@ def parse_args() -> Config:
     )
 
     parser.add_argument(
+        "--system-automation-file",
+        default=Config.system_automation_file,
+        help="Name of the Ansible playbook file.",
+    )
+
+    parser.add_argument(
         "--destination",
         type=Path,
         default=Config.destination,
@@ -544,16 +553,9 @@ def parse_args() -> Config:
         help="Enable debug logging.",
     )
 
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
 
-    return Config(
-        repository=args.repository,
-        branch=args.branch,
-        system_automation_folder=args.system_automation_folder,
-        destination=args.destination.expanduser(),
-        wait_for_seconds=args.wait_for_seconds,
-        log_level=logging.DEBUG if args.debug else logging.INFO,
-    )
+    return Config.from_args(args)
 
 
 if __name__ == "__main__":
