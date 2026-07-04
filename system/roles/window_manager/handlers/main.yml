@@ -1,0 +1,17 @@
+---
+- name: Check if graphical session is active
+  listen: configure services
+  block:
+    - name: Start/enable user services
+      ansible.builtin.service:
+        name: "{{ window_manager_user_services }}"
+        state: started
+        enabled: true
+        scope: user
+
+    - name: Start/enable system services
+      ansible.builtin.service:
+        name: "{{ window_manager_system_services }}"
+        state: started
+        enabled: true
+        become: true

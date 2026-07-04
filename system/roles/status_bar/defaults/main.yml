@@ -1,0 +1,6 @@
+---
+status_bar_packages:
+  - waybar
+
+status_bar_service:
+  - waybar

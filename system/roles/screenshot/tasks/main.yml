@@ -1,0 +1,6 @@
+---
+- name: Install screenshot packages
+  ansible.builtin.package:
+    name: "{{ screenshot_packages }}"
+    state: present
+  become: true

@@ -1,67 +1,38 @@
 ---
-desktop_packages:
+window_manager_packages:
   - hyprland
+  # Systemd startup
   - uwsm
-  - waybar
+  - libnewt
+  # Must have
+  - dunst
+  - libnotify
+  - xdg-desktop-portal-hyprland
+  - xdg-desktop-portal-gtk # file picker
+  - hyprpolkitagent
+  - qt5-wayland
+  - qt6-wayland
+  - ttf-jetbrains-mono-nerd
+  - noto-fonts
+  - noto-fonts-emoji
+  - noto-fonts-cjk
+
+  # Don't know where these goes
   - hyprpaper
   - hypridle
   - hyprlock
   - hyprshutdown
-  - xdg-desktop-portal-hyprland
-  - xdg-desktop-portal-gtk
   - wl-clipboard
-  - dunst
-  - polkit
-  - hyprpolkitagent
   - brightnessctl
-  - qt5-wayland
-  - qt6-wayland
   - power-profiles-daemon
   - python-gobject # for powerprofilesctl
-  - xdg-user-dirs
-  - libnotify
   - rofi
-  - firefox
-  - ghostty # TUIs
-  - kitty # fallback
-  - bitwarden
-  - calibre
-  - aerc
-  - caligula
-
-  # NOTE: File Manager (TUI) and its dependencies
-  # https://yazi-rs.github.io/docs/installation/
-  - yazi
-  - file
-  - ffmpeg
-  - 7zip
-  - jq
-  - poppler
-  - fd
-  - ripgrep
-  - fzf
-  - zoxide
-  - resvg
-  - imagemagick
-  - file
-  - udisks2 # mount plugin dependency
-  - wl-clipboard
-  - github-cli
-
-  ## Screenshot
-  - grim
-  - slurp
-
-  ## Video player
   - mpv
 
-desktop_user_services:
+window_manager_user_services:
   - hyprpaper
   - hypridle
   - hyprpolkitagent
-  - waybar
 
-desktop_system_services:
+window_manager_system_services:
   - power-profiles-daemon
-
-desktop_default_browser_entry: firefox.desktop

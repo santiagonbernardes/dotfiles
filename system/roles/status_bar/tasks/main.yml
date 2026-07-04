@@ -1,0 +1,7 @@
+---
+- name: Install packages
+  ansible.builtin.package:
+    name: "{{ status_bar_packages }}"
+    state: present
+  notify: configure services
+  become: true

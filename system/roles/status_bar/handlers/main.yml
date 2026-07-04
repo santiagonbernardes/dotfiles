@@ -1,0 +1,22 @@
+---
+- name: Check if graphical session is active
+  listen: configure services
+  block:
+    - name: Get graphical session state
+      # noqa command-instead-of-module
+      ansible.builtin.command:
+        cmd: systemctl --user --quiet is-active graphical-session.target
+      register: status_bar_graphical_session
+      changed_when: false
+      failed_when: false
+
+    - name: Set graphical session state fact
+      ansible.builtin.set_fact:
+        status_bar_graphical_session_active: "{{ status_bar_graphical_session.rc == 0 }}"
+
+    - name: Enable and optionally start services
+      ansible.builtin.service:
+        name: "{{ status_bar_service }}"
+        enabled: true
+        state: "{{ 'started' if desktop_graphical_session_active else omit }}"
+        scope: "user"
