@@ -1,5 +1,6 @@
+---
 gui:
-# DRACULA
+  # DRACULA
   theme:
     activeBorderColor:
       - "#FF79C6"

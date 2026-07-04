@@ -4,7 +4,6 @@ vm_packages:
   - dmidecode
   - libvirt
   - qemu-full
-  - virt-manager
 
 vm_groups:
   - libvirt

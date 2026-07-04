@@ -18,6 +18,7 @@ desktop_packages:
   - python-gobject # for powerprofilesctl
   - rofi
   - mpv
+  - virt-manager
 
 desktop_user_services:
   - hyprpaper

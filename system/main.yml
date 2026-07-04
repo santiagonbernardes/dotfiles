@@ -11,17 +11,19 @@
       become: true
 
   roles:
-    - bootloader
-    - fonts
-    - gpu
-    - localization
+    - base
     - vconsole
+    - localization
     - initramfs
+    - bootloader
+    - autologin
+    - gpu
     - audio
     - bluetooth
-    - desktop
-    - dev
-    - autologin
     - ufw
     - docker
-    - vm
+    - git
+    - hardware
+    - mise
+    - ai
+    - desktop
