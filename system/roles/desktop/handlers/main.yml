@@ -2,24 +2,16 @@
 - name: Check if graphical session is active
   listen: configure services
   block:
-    - name: Get graphical session state
-      # noqa command-instead-of-module
-      ansible.builtin.command:
-        cmd: systemctl --user --quiet is-active graphical-session.target
-      register: desktop_graphical_session
-      changed_when: false
-      failed_when: false
+    - name: Start/enable user services
+      ansible.builtin.service:
+        name: "{{ desktop_user_services }}"
+        state: started
+        enabled: true
+        scope: user
 
-    - name: Set graphical session state fact
-      ansible.builtin.set_fact:
-        desktop_graphical_session_active: "{{ graphical_session_check.rc == 0 }}"
-
-    - name: Handle all services
-      ansible.builtin.include_tasks: service_scope.yml
-      loop:
-        - scope: user
-          services: "{{ desktop_user_services }}"
-        - scope: system
-          services: "{{ desktop_system_services }}"
-      loop_control:
-        loop_var: config
+    - name: Start/enable system services
+      ansible.builtin.service:
+        name: "{{ desktop_system_services }}"
+        state: started
+        enabled: true
+      become: true

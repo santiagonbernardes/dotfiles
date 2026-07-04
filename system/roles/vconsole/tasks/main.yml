@@ -1,4 +1,10 @@
 ---
+- name: Installs fonts
+  ansible.builtin.package:
+    name: terminus-font
+    state: present
+  become: true
+
 - name: Ensure configuration files copied
   ansible.builtin.copy:
     src: vconsole.conf

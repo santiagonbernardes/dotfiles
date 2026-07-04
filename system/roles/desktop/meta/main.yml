@@ -6,9 +6,11 @@ galaxy_info:
   min_ansible_version: "2.2"
 
 dependencies:
+  - role: base
+  - role: window_manager
   - role: terminal_emulator
   - role: file_manager
-  - role: gpu
-  - role: audio
-  - role: bluetooth
-  - role: fonts
+  - role: keyring
+  - role: screenshot
+  - role: status_bar
+  - role: text_editor

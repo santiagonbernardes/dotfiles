@@ -1,9 +1,0 @@
----
-fonts_packages:
-  - terminus-font # vconsole
-  - otf-font-awesome # Icons for waybar
-  - ttf-jetbrains-mono-nerd
-  - woff2-font-awesome
-  - noto-fonts
-  - noto-fonts-emoji
-  - noto-fonts-cjk

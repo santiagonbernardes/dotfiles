@@ -1,6 +1,8 @@
 ---
 status_bar_packages:
   - waybar
+  - otf-font-awesome
+  - ttf-jetbrains-mono-nerd
 
 status_bar_service:
   - waybar
