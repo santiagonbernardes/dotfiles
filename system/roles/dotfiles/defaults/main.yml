@@ -1,0 +1,4 @@
+---
+dotfiles_packages:
+  - chezmoi
+  - bitwarden-cli

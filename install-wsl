@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+import os
+import subprocess
+from pathlib import Path
+
+
+def main():
+    subprocess.run(
+        (
+            "pacman",
+            "-Syu",
+            "--noconfirm",
+            "--quiet",
+            "--noprogressbar",
+            "--needed",
+            "bitwarden-cli",
+            "ansible",
+        )
+    )
+
+    bw_session = os.getenv("BW_SESSION")
+
+    if not bw_session:
+        bw_session = subprocess.run(
+            ("bw", "login", "--raw"), stdout=subprocess.PIPE, text=True
+        ).stdout.strip()
+
+    current_env = os.environ.copy()
+    current_env["LANG"] = "C.UTF-8"
+    current_env["BW_SESSION"] = bw_session
+
+    subprocess.run(
+        ["ansible-playbook", "main-wsl.yml", "-K", "-i", "hosts.ini"],
+        cwd=Path() / "system",
+        env=current_env,
+    )
+
+
+if __name__ == "__main__":
+    main()

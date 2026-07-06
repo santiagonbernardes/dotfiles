@@ -1,5 +1,7 @@
 ---
 base_packages:
+  - base
+  - sudo
   - jq
   - fd
   - ripgrep
@@ -22,3 +24,4 @@ base_packages:
   - bitwarden-cli
   - polkit
   - starship
+  - ansible-lint

@@ -3,19 +3,17 @@
 import argparse
 import json
 import logging
-from math import e
 import os
-from shutil import Error
 import subprocess
 import sys
 import time
+import urllib.parse
 from dataclasses import asdict, dataclass
 from enum import Enum
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
 from typing import Any, Protocol, Self
-import urllib.parse
 
 
 class InstallError(Exception):

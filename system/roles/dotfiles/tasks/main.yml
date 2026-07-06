@@ -1,0 +1,6 @@
+---
+- name: Install dotfiles packages
+  ansible.builtin.package:
+    name: "{{ dotfiles_packages }}"
+    state: present
+  become: true

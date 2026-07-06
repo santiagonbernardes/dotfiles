@@ -11,5 +11,6 @@ text_editor_packages:
   - fzf
   - ripgrep
   - fd
+  - wget # Mason
   # Mise takes care of tree-sitter-cli and luarocks
   - mise
