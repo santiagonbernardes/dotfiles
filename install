@@ -3,7 +3,9 @@
 import argparse
 import json
 import logging
+from math import e
 import os
+from shutil import Error
 import subprocess
 import sys
 import time
@@ -14,6 +16,18 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Protocol, Self
 import urllib.parse
+
+
+class InstallError(Exception):
+    pass
+
+
+class NotAVCSPathError(InstallError):
+    pass
+
+
+class RepositoryAlreadyClonedError(InstallError):
+    pass
 
 
 class CommandRunner:
@@ -319,71 +333,129 @@ class PasswordManager(Installable):
         return result.stdout.strip()
 
 
-class GitRepository(Installable):
+class VersionControlSystem(Installable):
     _BINARY: Path = Path("/usr/bin/git")
     _PACKAGES: tuple[str, ...] = ("git",)
+    _CLONE_SUFFIX: str = ".git"
 
     def __init__(
         self,
         runner: CommandRunner,
-        repository_url: str,
-        repository_folder: str,
-        destination: Path | None,
     ) -> None:
         self._log: logging.Logger = logging.getLogger(f"{__name__}.Git")
         self._runner: CommandRunner = runner
-        self._repository_url: str = repository_url
-        self._repository_folder: str = repository_folder
-        self._destination: Path | None = destination
-        self._reposity_path: Path = (
-            self._destination or Path()
-        ) / self._repository_folder
 
     @property
     def required_packages(self) -> tuple[str, ...]:
         return self._PACKAGES
 
-    def exists(self) -> bool:
-        return self._reposity_path.exists()
+    @property
+    def suffix(self) -> str:
+        return self._CLONE_SUFFIX
 
-    def clone(self) -> None:
-        if self._destination and not self._destination.exists():
-            self._log.info(
-                "Destination path %s does not exist, creating it.", self._destination
+    def is_path_a_repository(self, path: Path) -> bool:
+        try:
+            result: subprocess.CompletedProcess = self._runner.run(
+                (self._BINARY, "rev-parse", "--is-inside-work-tree"), cwd=path
             )
+            return result.stdout.strip().lower() == "true"
+        except subprocess.CalledProcessError:
+            return False
 
-            self._destination.mkdir(mode=755, parents=True)
-
+    def clone(self, url: str, destination: Path) -> None:
         self._log.info(
-            "Cloning repository %s into the directory=%s folder =%s",
-            self._repository_url,
-            self._destination,
-            self._repository_folder,
+            "Cloning repository %s into the directory %s",
+            url,
+            destination,
         )
 
-        args: tuple[str | Path, ...] = (
-            self._BINARY,
-            "clone",
-            self._repository_url,
-            self._repository_folder,
-        )
+        if self.is_path_a_repository(destination):
+            raise RepositoryAlreadyClonedError
 
-        self._runner.run(args, cwd=self._destination)
+        args: tuple[str | Path, ...] = (self._BINARY, "clone", url, destination)
+
+        self._runner.run(args)
         self._log.info("Repository cloned successfully")
 
-    def pull(self) -> None:
-        self._log.info("Pulling latest changes in %s", self._reposity_path)
-        self._runner.run((self._BINARY, "pull"), cwd=self._reposity_path)
+    def update(self, path: Path) -> None:
+        if not self.is_path_a_repository(path):
+            raise NotAVCSPathError
+
+        self._log.info("Pulling latest changes in %s", path)
+        self._runner.run((self._BINARY, "pull"), cwd=path)
         self._log.info("Pull complete")
 
-    def switch(self, branch: str) -> None:
+    def switch(self, path: Path, branch: str) -> None:
+        if not self.is_path_a_repository(path):
+            raise NotAVCSPathError
+
+        result: subprocess.CompletedProcess = self._runner.run(
+            (self._BINARY, "branch", "--show-current")
+        )
+
+        if result.stdout.strip() == branch:
+            self._log.info("Repository %s already in branch %s", path, branch)
+            return
+
         self._log.info(
             "Switching to branch '%s' in %s",
             branch,
-            self._repository_folder,
+            branch,
         )
-        self._runner.run((self._BINARY, "switch", branch), cwd=self._reposity_path)
+
+        self._runner.run((self._BINARY, "switch", branch), cwd=path)
         self._log.debug("Branch switch to '%s' complete", branch)
+
+
+class AutomationRepository:
+    def __init__(self, vcs: VersionControlSystem, config: Config) -> None:
+        self._log: logging.Logger = logging.getLogger(
+            f"{__name__}.AutomationRepository"
+        )
+        self._vcs: VersionControlSystem = vcs
+        self._repository_url: str = config.repository
+        self._parent_path: Path = config.destination
+        self._path: Path = self._parse_path()
+        self._branch: str = config.branch
+        self._system_automation_path: Path = (
+            self._path / config.system_automation_folder / config.system_automation_file
+        )
+        self._user_automation_path: Path = self._user_automation_path
+
+    def sync_with_configuration(self) -> None:
+        if not self._parent_path.exists():
+            self._create_parent_path()
+
+        if self._path.exists():
+            self._vcs.switch(self._path, self._branch)
+            self._vcs.update(self._path)
+        else:
+            self._vcs.clone(self._repository_url, self._path)
+            self._vcs.switch(self._path, self._branch)
+
+    def _parse_path(self) -> Path:
+        path: Path = self._parent_path / self._get_folder_name()
+        self._log.debug("Parsed path is %s", path)
+        return path
+
+    def _get_folder_name(self) -> str:
+        parsed: urllib.parse.ParseResult = urllib.parse.urlparse(self._repository_url)
+        folder_name: str = os.path.basename(parsed.path)
+
+        if folder_name.endswith(self._vcs.suffix):
+            folder_name = folder_name.removesuffix(self._vcs.suffix)
+
+        return folder_name
+
+    def _create_parent_path(self) -> None:
+        mode: int = 755
+        self._log.info(
+            "Parent path %s does not exist, creating it with mode %d",
+            self._parent_path,
+            mode,
+        )
+
+        self._parent_path.mkdir(mode=mode, parents=True)
 
 
 class Environment:
@@ -476,39 +548,13 @@ class UserAutomation(Installable):
         self._log.info("User automation finished")
 
 
-def extract_folder_from_repo_url(repository_url: str) -> str:
-    parsed: urllib.parse.ParseResult = urllib.parse.urlparse(repository_url)
-    folder_name: str = os.path.basename(parsed.path)
-
-    # Strip the '.git' extension if it exists
-    if folder_name.endswith(".git"):
-        folder_name = folder_name.removesuffix(".git")
-
-    return folder_name
-
-
-def main(config: Config) -> int:
-    log: logging.Logger = logging.getLogger(__name__)
-    log.info("Bootstrap starting")
-
-    log.debug("Config loaded: %s", asdict(config))
-
-    repository_folder: str = extract_folder_from_repo_url(config.repository)
-    system_automation_path: Path = (
-        config.destination / repository_folder / config.system_automation_folder
-    )
-    user_automation_path: Path = config.destination / repository_folder
-
+def create_automations(config: Config) -> tuple[SystemAutomation, UserAutomation]:
     runner: CommandRunner = CommandRunner()
     package_manager: PackageManager = PackageManager(runner)
     password_manager: PasswordManager = PasswordManager(runner)
     environment: Environment = Environment(password_manager)
-    repository: GitRepository = GitRepository(
-        runner,
-        config.repository,
-        repository_folder,
-        config.destination,
-    )
+    vcs: VersionControlSystem = VersionControlSystem(runner)
+    repository: AutomationRepository = AutomationRepository(vcs, config)
     system_automation: SystemAutomation = SystemAutomation(
         runner, environment, system_automation_path
     )
@@ -521,6 +567,17 @@ def main(config: Config) -> int:
         system_automation,
         user_automation,
     )
+
+
+def main(config: Config) -> int:
+    log: logging.Logger = logging.getLogger(__name__)
+    log.info("Bootstrap starting")
+    try:
+        create_automations(config)
+    except:
+        pass
+
+    log.debug("Config loaded: %s", asdict(config))
 
     try:
         if package_manager.has_upgrades():
