@@ -8,12 +8,14 @@ import subprocess
 import sys
 import time
 import urllib.parse
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from itertools import chain
 from pathlib import Path
 from typing import Any, Protocol, Self
+
+log: logging.Logger = logging.getLogger(__name__)
 
 
 class InstallError(Exception):
@@ -21,11 +23,37 @@ class InstallError(Exception):
 
 
 class NotAVCSPathError(InstallError):
-    pass
+    def __init__(self, path: Path, *args: object) -> None:
+        self.path: Path = path
+        super().__init__(*args)
 
 
 class RepositoryAlreadyClonedError(InstallError):
     pass
+
+
+class SystemAutomationNotFoundError(InstallError):
+    def __init__(self, path: Path, *args: object) -> None:
+        self.path: Path = path
+        super().__init__(*args)
+
+
+class UnknownPasswordManagerStatus(InstallError):
+    pass
+
+
+class SessionKeyUnavailableError(InstallError):
+    pass
+
+
+class UnexpectedPasswordManagerResponse(InstallError):
+    pass
+
+
+class MandatorySystemRebootError(InstallError):
+    def __init__(self, seconds: int, *args: object) -> None:
+        self.seconds: int = seconds
+        super().__init__(*args)
 
 
 class CommandRunner:
@@ -145,6 +173,9 @@ class PackageManager:
         self._runner = runner
 
     def has_upgrades(self) -> bool:
+        self._log.debug("Updating local database")
+        self._run_command(PackageManagerFlags.INSTALL)
+
         self._log.debug("Checking for pending system upgrades")
         return_code: int = self._run_command(
             PackageManagerFlags.CHECK_UPGRADES, valid_return_codes={0, 1}
@@ -297,7 +328,13 @@ class PasswordManager(Installable):
             return PasswordManagerStatus(parsed["status"])
         except (ValueError, json.JSONDecodeError):
             self._log.error("Failed to parse password manager status output: %r", raw)
-            raise
+            raise UnknownPasswordManagerStatus
+        except KeyError:
+            self._log.error(
+                "The response obtained from the password manager does not contain status."
+            )
+            self._log.debug("Raw response: %s", raw)
+            raise UnexpectedPasswordManagerResponse
 
     def _login(self) -> str:
         self._log.debug("Running password manager login")
@@ -319,7 +356,7 @@ class PasswordManager(Installable):
         self._log.error(
             "Expected environment variable %s is not set", self.session_env_key
         )
-        raise Exception(f"{self.session_env_key} is not present in this env.")
+        raise SessionKeyUnavailableError
 
     def _run_command(self, params: tuple[str, ...]) -> str:
         result: subprocess.CompletedProcess = self._runner.run(
@@ -352,6 +389,9 @@ class VersionControlSystem(Installable):
         return self._CLONE_SUFFIX
 
     def is_path_a_repository(self, path: Path) -> bool:
+        if not path.exists():
+            return False
+
         try:
             result: subprocess.CompletedProcess = self._runner.run(
                 (self._BINARY, "rev-parse", "--is-inside-work-tree"), cwd=path
@@ -377,7 +417,7 @@ class VersionControlSystem(Installable):
 
     def update(self, path: Path) -> None:
         if not self.is_path_a_repository(path):
-            raise NotAVCSPathError
+            raise NotAVCSPathError(path)
 
         self._log.info("Pulling latest changes in %s", path)
         self._runner.run((self._BINARY, "pull"), cwd=path)
@@ -385,10 +425,10 @@ class VersionControlSystem(Installable):
 
     def switch(self, path: Path, branch: str) -> None:
         if not self.is_path_a_repository(path):
-            raise NotAVCSPathError
+            raise NotAVCSPathError(path)
 
         result: subprocess.CompletedProcess = self._runner.run(
-            (self._BINARY, "branch", "--show-current")
+            (self._BINARY, "branch", "--show-current"), cwd=path
         )
 
         if result.stdout.strip() == branch:
@@ -398,7 +438,7 @@ class VersionControlSystem(Installable):
         self._log.info(
             "Switching to branch '%s' in %s",
             branch,
-            branch,
+            path,
         )
 
         self._runner.run((self._BINARY, "switch", branch), cwd=path)
@@ -415,10 +455,18 @@ class AutomationRepository:
         self._parent_path: Path = config.destination
         self._path: Path = self._parse_path()
         self._branch: str = config.branch
-        self._system_automation_path: Path = (
+        self._system_automation_file_path: Path = (
             self._path / config.system_automation_folder / config.system_automation_file
         )
-        self._user_automation_path: Path = self._user_automation_path
+        self._user_automation_path: Path = self._path
+
+    @property
+    def system_automation_file_path(self) -> Path:
+        return self._system_automation_file_path
+
+    @property
+    def user_automation_path(self) -> Path:
+        return self._user_automation_path
 
     def sync_with_configuration(self) -> None:
         if not self._parent_path.exists():
@@ -446,7 +494,7 @@ class AutomationRepository:
         return folder_name
 
     def _create_parent_path(self) -> None:
-        mode: int = 755
+        mode: int = 0o755
         self._log.info(
             "Parent path %s does not exist, creating it with mode %d",
             self._parent_path,
@@ -485,29 +533,25 @@ class SystemAutomation(Installable):
         self,
         runner: CommandRunner,
         environment: Environment,
-        system_automation_path: Path,
+        automation_repository: AutomationRepository,
     ) -> None:
         self._log: logging.Logger = logging.getLogger(f"{__name__}.SystemAutomation")
         self._runner = runner
         self._environment: Environment = environment
-        self._system_automation_path: Path = system_automation_path
+        self._automation_repository: AutomationRepository = automation_repository
 
     def run(self) -> None:
-        if not self._system_automation_path.exists():
-            self._log.error(
-                "Automation path %s doesn't exist.", self._system_automation_path
-            )
-            raise Exception(
-                "Automation path %s doesn't exist. Is it correct? Use --system_automation_folder.",
-                self._system_automation_path,
-            )
-
-        self._log.info(
-            "Running system automation playbook in %s", self._system_automation_path
+        automation_file_path: Path = (
+            self._automation_repository.system_automation_file_path
         )
+        if not automation_file_path.exists():
+            self._log.error("Automation path %s doesn't exist.", automation_file_path)
+            raise SystemAutomationNotFoundError(automation_file_path)
+
+        self._log.info("Running system automation playbook in %s", automation_file_path)
         self._runner.run(
-            (self._BINARY, "main.yml", "-K"),
-            cwd=self._system_automation_path,
+            (self._BINARY, automation_file_path.name, "-K"),
+            cwd=automation_file_path.parent,
             env=self._environment.as_dict(),
             capture_output=False,
         )
@@ -522,105 +566,129 @@ class UserAutomation(Installable):
         self,
         runner: CommandRunner,
         environment: Environment,
-        user_automation_path: Path,
+        automation_repository: AutomationRepository,
     ) -> None:
         self._log: logging.Logger = logging.getLogger(f"{__name__}.UserAutomation")
         self._runner = runner
         self._environment = environment
-        self._user_automation_path: Path = user_automation_path
+        self._automation_repository: AutomationRepository = automation_repository
 
     @property
     def required_packages(self) -> tuple[str, ...]:
         return self._PACKAGES
 
     def run(self) -> None:
+        automation_path: Path = self._automation_repository.user_automation_path
         self._log.info(
-            "Running user automation (chezmoi) with source %s",
-            self._user_automation_path,
+            "Running user automation (chezmoi) with source %s", automation_path
         )
         self._runner.run(
-            (self._BINARY, "init", "--apply", "--source", self._user_automation_path),
+            (self._BINARY, "init", "--apply", "--source", automation_path),
             capture_output=False,
             env=self._environment.as_dict(),
         )
         self._log.info("User automation finished")
 
 
-def create_automations(config: Config) -> tuple[SystemAutomation, UserAutomation]:
-    runner: CommandRunner = CommandRunner()
+def install_packages(
+    config: Config, runner: CommandRunner, installables: tuple[Installable, ...]
+) -> None:
     package_manager: PackageManager = PackageManager(runner)
+    if package_manager.has_upgrades():
+        log.warning(
+            "System upgrades are available, the system will reboot after the upgrade."
+        )
+        package_manager.install_with_system_upgrade(installables)
+        log.info("Upgrade complete, requesting reboot")
+        raise MandatorySystemRebootError(config.wait_for_seconds)
+
+    if not package_manager.all_packages_installed(installables):
+        log.info("Installing missing packages")
+        package_manager.install_packages(installables)
+
+
+def init_bootstrap_dependencies(
+    config: Config,
+) -> tuple[AutomationRepository, SystemAutomation, UserAutomation]:
+    runner: CommandRunner = CommandRunner()
     password_manager: PasswordManager = PasswordManager(runner)
     environment: Environment = Environment(password_manager)
     vcs: VersionControlSystem = VersionControlSystem(runner)
     repository: AutomationRepository = AutomationRepository(vcs, config)
     system_automation: SystemAutomation = SystemAutomation(
-        runner, environment, system_automation_path
+        runner, environment, repository
     )
-    user_automation: UserAutomation = UserAutomation(
-        runner, environment, user_automation_path
+    user_automation: UserAutomation = UserAutomation(runner, environment, repository)
+
+    install_packages(
+        config, runner, (password_manager, vcs, system_automation, user_automation)
     )
-    installables: tuple[Installable, ...] = (
-        password_manager,
-        repository,
-        system_automation,
-        user_automation,
-    )
+
+    return repository, system_automation, user_automation
+
+
+def bootstrap(config: Config) -> int:
+    repository: AutomationRepository
+    system_automation: SystemAutomation
+    user_automation: UserAutomation
+
+    repository, system_automation, user_automation = init_bootstrap_dependencies(config)
+    repository.sync_with_configuration()
+    log.info("Starting system automation.")
+    system_automation.run()
+    log.info("System automation completed.")
+    log.info("Starting user automation.")
+    user_automation.run()
+    log.info("User automation finished.")
+    log.info("Bootstrap completed successfully")
+
+    return 0
 
 
 def main(config: Config) -> int:
-    log: logging.Logger = logging.getLogger(__name__)
     log.info("Bootstrap starting")
     try:
-        create_automations(config)
-    except:
-        pass
-
-    log.debug("Config loaded: %s", asdict(config))
-
-    try:
-        if package_manager.has_upgrades():
-            log.warning(
-                "System upgrades are available, the system will reboot after the upgrade."
-            )
-            package_manager.install_with_system_upgrade(installables)
-            log.info("Upgrade complete, rebooting in %ds.", config.wait_for_seconds)
-            time.sleep(config.wait_for_seconds)
-            runner.run(("reboot",))
-            return 0
-
-        if not package_manager.all_packages_installed(installables):
-            log.info("Installing missing packages")
-            package_manager.install_packages(installables)
-
-        if repository.exists():
-            log.info("Repository already exists at %s; syncing", config.destination)
-            repository.switch(config.branch)
-            repository.pull()
-        else:
-            log.info(
-                "Repository not found at %s; cloning from %s",
-                config.destination,
-                config.repository,
-            )
-            repository.clone()
-            repository.switch(config.branch)
-
-        log.info("Starting system automation.")
-        system_automation.run()
-        log.info("System automatiom completed.")
-        log.info("Starting user automation.")
-        user_automation.run()
-        log.info("User automation finished.")
-
-        log.info("Bootstrap completed successfully")
+        return bootstrap(config)
+    except MandatorySystemRebootError as e:
+        log.info("The system needs rebooting. Rebooting in %d seconds", e.seconds)
+        time.sleep(e.seconds)
+        CommandRunner().run(("reboot",))
         return 0
-
+    except NotAVCSPathError as e:
+        log.error(
+            "The path %s does not accept Version Control System commands. Verify the --destination flag",
+            e.path,
+        )
+    except RepositoryAlreadyClonedError:
+        # TODO: add --force
+        log.error(
+            "The destination already has a repository. Verify and remove it before running the script again."
+        )
+    except SystemAutomationNotFoundError as e:
+        log.error(
+            "System automation not found at %s. Verify the --branch, --destination, --system-automation-folder or --system_automation_file options and run the command again.",
+            e.path,
+        )
+    except UnknownPasswordManagerStatus:
+        log.error(
+            "The password manager returned an unknown status. Run the command using --debug to verify what's returned"
+        )
+    except SessionKeyUnavailableError:
+        log.error("Could not find password manager environment variable.")
+    except UnexpectedPasswordManagerResponse:
+        log.error(
+            "The password manager resonse has an unexpected format. Run the command using --debug and verify its content."
+        )
     except subprocess.CalledProcessError as e:
         log.error(
-            "Command failed with exit code %d: %s",
+            "Unexpected command error while running the command %s.\nCode: %d\nError: %s\nOutput: %s",
+            subprocess.list2cmdline(e.cmd),
             e.returncode,
             e.stderr,
+            e.stdout,
         )
+    except Exception:
+        log.exception("An unexpected non-command error")
 
     return 1
 
