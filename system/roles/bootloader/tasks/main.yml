@@ -6,16 +6,14 @@
   changed_when: false
   failed_when: bootloader_blkid_output.rc != 0
 
+- name: Set LUKS partition UUID
+  ansible.builtin.set_fact:
+    bootloader_luks_uuid: "{{ bootloader_blkid_output.stdout | trim }}"
+
 - name: Print returned UUID
   ansible.builtin.debug:
-    msg: "LUKS partition UUID is {{ bootloader_blkid_output.stdout }}"
+    msg: "LUKS partition UUID is {{ bootloader_luks_uuid }}"
     verbosity: 1
-
-- name: Assert on partition UUID
-  ansible.builtin.assert:
-    that:
-      - bootloader_blkid_output.stdout | trim != ""
-    fail_msg: Couldn't get LUKS partition UUID. Is the disk correctly encrypted?
 
 - name: Copy bootloader entries
   ansible.builtin.template:

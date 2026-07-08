@@ -1,11 +1,14 @@
+{{- $fields := (bitwarden "item" "Dotfiles Input").fields -}}
+
 sourceDir = {{ .chezmoi.config.sourceDir | quote }}
 
 [bitwarden]
   unlock = "auto"
 
 [data]
-  name = {{- promptStringOnce . "name" "Git Name" "changeme" | quote }}
-  email = {{- promptStringOnce . "email" "Git Email" "changeme@email.com" | quote }}
+{{- range $field := $fields }}
+  {{ $field.name }} = {{ $field.value | quote }}
+{{- end }}
   font = "JetBrainsMono Nerd Font"
 
 [merge]

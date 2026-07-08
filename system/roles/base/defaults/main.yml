@@ -24,4 +24,5 @@ base_packages:
   - bitwarden-cli
   - polkit
   - starship
+  - ansible
   - ansible-lint

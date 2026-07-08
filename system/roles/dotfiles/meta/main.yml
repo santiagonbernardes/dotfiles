@@ -7,3 +7,4 @@ galaxy_info:
 
 dependencies:
   - role: base
+  - role: file_manager

@@ -19,7 +19,7 @@
   loop: "{{ vm_groups }}"
   become: true
 
-- name: Adds user to docker group
+- name: Adds user to vm related groups
   ansible.builtin.user:
     name: "{{ ansible_facts['user_id'] }}"
     groups: "{{ item }}"

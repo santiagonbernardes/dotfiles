@@ -1,12 +1,4 @@
 ---
-- name: Download ufw-docker
-  ansible.builtin.get_url:
-    url: "{{ ufw_docker_ufw_url }}"
-    dest: "{{ ufw_docker_ufw_download_path }}"
-    mode: "0755"
-    force: false
-  become: true
-
 - name: Check if comment exists
   ansible.builtin.command:
     cmd: "grep -Fxq {{ ufw_docker_ufw_comment | quote }} {{ item }}"
@@ -15,17 +7,31 @@
   changed_when: false
   failed_when: false
 
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
 - name: Run ufw-docker installation
   when: >
-    ufw_docker_ufw_comment_check.results
+    (ufw_docker_ufw_comment_check.results
     | selectattr('rc', 'ne', 0)
     | list
-    | length > 0
+    | length > 0) and
+    ('docker' in ansible_facts.packages)
   block:
+    - name: Download ufw-docker
+      ansible.builtin.get_url:
+        url: "{{ ufw_docker_ufw_url }}"
+        dest: "{{ ufw_docker_ufw_download_path }}"
+        mode: "0755"
+        force: false
+        checksum: "{{ ufw_docker_ufw_checksum }}"
+      become: true
+
     - name: Install ufw-docker
       ansible.builtin.command:
         cmd: "{{ ufw_docker_ufw_download_path }} install --system"
-      changed_when: false
+      changed_when: true
       become: true
 
     - name: Append comment

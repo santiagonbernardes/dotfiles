@@ -17,6 +17,7 @@
     - initramfs
     - bootloader
     - autologin
+    - ssh
     - gpu
     - audio
     - bluetooth
@@ -29,3 +30,4 @@
     - mise
     - ai
     - desktop
+    - dotfiles

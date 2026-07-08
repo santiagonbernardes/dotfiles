@@ -458,15 +458,10 @@ class AutomationRepository:
         self._system_automation_file_path: Path = (
             self._path / config.system_automation_folder / config.system_automation_file
         )
-        self._user_automation_path: Path = self._path
 
     @property
     def system_automation_file_path(self) -> Path:
         return self._system_automation_file_path
-
-    @property
-    def user_automation_path(self) -> Path:
-        return self._user_automation_path
 
     def sync_with_configuration(self) -> None:
         if not self._parent_path.exists():
@@ -478,6 +473,13 @@ class AutomationRepository:
         else:
             self._vcs.clone(self._repository_url, self._path)
             self._vcs.switch(self._path, self._branch)
+
+        if not self._system_automation_file_path.exists():
+            self._log.error(
+                "System Automation path %s doesn't exist.",
+                self._system_automation_file_path,
+            )
+            raise SystemAutomationNotFoundError(self._system_automation_file_path)
 
     def _parse_path(self) -> Path:
         path: Path = self._parent_path / self._get_folder_name()
@@ -544,9 +546,6 @@ class SystemAutomation(Installable):
         automation_file_path: Path = (
             self._automation_repository.system_automation_file_path
         )
-        if not automation_file_path.exists():
-            self._log.error("Automation path %s doesn't exist.", automation_file_path)
-            raise SystemAutomationNotFoundError(automation_file_path)
 
         self._log.info("Running system automation playbook in %s", automation_file_path)
         self._runner.run(
@@ -556,38 +555,6 @@ class SystemAutomation(Installable):
             capture_output=False,
         )
         self._log.info("System automation playbook finished")
-
-
-class UserAutomation(Installable):
-    _BINARY: Path = Path("/usr/bin/chezmoi")
-    _PACKAGES: tuple[str, ...] = ("bitwarden-cli", "chezmoi")
-
-    def __init__(
-        self,
-        runner: CommandRunner,
-        environment: Environment,
-        automation_repository: AutomationRepository,
-    ) -> None:
-        self._log: logging.Logger = logging.getLogger(f"{__name__}.UserAutomation")
-        self._runner = runner
-        self._environment = environment
-        self._automation_repository: AutomationRepository = automation_repository
-
-    @property
-    def required_packages(self) -> tuple[str, ...]:
-        return self._PACKAGES
-
-    def run(self) -> None:
-        automation_path: Path = self._automation_repository.user_automation_path
-        self._log.info(
-            "Running user automation (chezmoi) with source %s", automation_path
-        )
-        self._runner.run(
-            (self._BINARY, "init", "--apply", "--source", automation_path),
-            capture_output=False,
-            env=self._environment.as_dict(),
-        )
-        self._log.info("User automation finished")
 
 
 def install_packages(
@@ -609,7 +576,7 @@ def install_packages(
 
 def init_bootstrap_dependencies(
     config: Config,
-) -> tuple[AutomationRepository, SystemAutomation, UserAutomation]:
+) -> tuple[AutomationRepository, SystemAutomation]:
     runner: CommandRunner = CommandRunner()
     password_manager: PasswordManager = PasswordManager(runner)
     environment: Environment = Environment(password_manager)
@@ -618,28 +585,21 @@ def init_bootstrap_dependencies(
     system_automation: SystemAutomation = SystemAutomation(
         runner, environment, repository
     )
-    user_automation: UserAutomation = UserAutomation(runner, environment, repository)
 
-    install_packages(
-        config, runner, (password_manager, vcs, system_automation, user_automation)
-    )
+    install_packages(config, runner, (password_manager, vcs, system_automation))
 
-    return repository, system_automation, user_automation
+    return repository, system_automation
 
 
 def bootstrap(config: Config) -> int:
     repository: AutomationRepository
     system_automation: SystemAutomation
-    user_automation: UserAutomation
 
-    repository, system_automation, user_automation = init_bootstrap_dependencies(config)
+    repository, system_automation = init_bootstrap_dependencies(config)
     repository.sync_with_configuration()
     log.info("Starting system automation.")
     system_automation.run()
     log.info("System automation completed.")
-    log.info("Starting user automation.")
-    user_automation.run()
-    log.info("User automation finished.")
     log.info("Bootstrap completed successfully")
 
     return 0

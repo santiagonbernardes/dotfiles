@@ -5,8 +5,4 @@ galaxy_info:
   description: Sets up docker with ufw-docker
   min_ansible_version: "2.2"
 
-dependencies:
-  - role: ufw
-    when: docker_use_ufw_docker | bool
-    vars:
-      ufw_use_ufw_docker: true
+dependencies: []

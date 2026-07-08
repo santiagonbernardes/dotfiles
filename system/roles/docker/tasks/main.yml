@@ -11,10 +11,6 @@
     state: present
   become: true
 
-- name: Debug
-  ansible.builtin.debug:
-    msg: " User for docker is {{ ansible_facts['user_id'] }}"
-
 - name: Adds user to docker group
   ansible.builtin.user:
     name: "{{ ansible_facts['user_id'] }}"
@@ -28,3 +24,10 @@
     state: started
     enabled: true
   become: true
+
+- name: Set up ufw-docker
+  when: docker_use_ufw_docker | bool
+  ansible.builtin.import_role:
+    name: ufw
+  vars:
+    ufw_use_ufw_docker: true

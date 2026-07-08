@@ -4,3 +4,17 @@
     name: "{{ dotfiles_packages }}"
     state: present
   become: true
+
+- name: Check if chezmoi is initiated
+  ansible.builtin.stat:
+    path: "{{ dotfiles_config_file }}"
+  register: dotfiles_config_file_output
+
+- name: Initiate dotfiles
+  ansible.builtin.command:
+    cmd: >
+      chezmoi init --apply
+      --source "{{ inventory_dir | dirname }}"
+      --no-tty
+    creates: "{{ dotfiles_config_file }}"
+  when: not dotfiles_config_file_output.stat.exists

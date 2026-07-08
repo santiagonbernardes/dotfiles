@@ -2,3 +2,6 @@
 dotfiles_packages:
   - chezmoi
   - bitwarden-cli
+
+dotfiles_input_item_name: Dotfiles Input
+dotfiles_config_file: "{{ ansible_facts['user_dir'] }}/.config/chezmoi/chezmoi.toml"
