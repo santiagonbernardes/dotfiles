@@ -21,7 +21,9 @@
     - audio
     - bluetooth
     - ufw
-    - docker
+    - role: docker
+      vars:
+        docker_use_ufw_docker: true
     - git
     - hardware
     - mise

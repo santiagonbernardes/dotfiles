@@ -4,4 +4,6 @@
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
 
+{{- if findExecutable "uwsm" (list "/usr/bin" "/usr/sbin") -}}
 uwsm check may-start && exec uwsm start hyprland.desktop
+{{- end -}}

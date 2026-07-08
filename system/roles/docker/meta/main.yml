@@ -7,3 +7,6 @@ galaxy_info:
 
 dependencies:
   - role: ufw
+    when: docker_use_ufw_docker | bool
+    vars:
+      ufw_use_ufw_docker: true

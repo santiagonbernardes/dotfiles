@@ -31,9 +31,15 @@ def main():
     current_env["BW_SESSION"] = bw_session
 
     subprocess.run(
-        ["ansible-playbook", "main-wsl.yml", "-K", "-i", "hosts.ini"],
-        cwd=Path() / "system",
+        [
+            "ansible-playbook",
+            Path("./10-wsl_initial_setup.yml"),
+            "-K",
+            "-i",
+            Path("./hosts.ini"),
+        ],
         env=current_env,
+        cwd=Path("./system/"),
     )
 
 

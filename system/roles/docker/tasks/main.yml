@@ -28,7 +28,3 @@
     state: started
     enabled: true
   become: true
-
-- name: Configure ufw-docker
-  ansible.builtin.import_tasks:
-    file: ufw-docker.yml

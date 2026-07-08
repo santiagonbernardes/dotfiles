@@ -21,16 +21,16 @@
 
 - name: Setup sudoers
   ansible.builtin.copy:
-    src: sudoers
-    dest: /etc/sudoers
+    src: 10-wheel
+    dest: /etc/sudoers.d/10-wheel
     owner: root
     group: root
     mode: "0644"
   become: true
 
-- name: Append comment
+- name: Append BW_SESSION
   ansible.builtin.lineinfile:
     path: "/home/{{ base_wsl_username }}/.bashrc"
-    line: "export BW_SESSION={{ lookup('ansible.builtin.env', 'BW_SESSION') }}"
+    line: "export BW_SESSION=\"{{ lookup('ansible.builtin.env', 'BW_SESSION') }}\""
     insertafter: EOF
   become: true

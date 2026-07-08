@@ -4,10 +4,11 @@
 - name: Sets up a WSL workstation
   hosts: workstation
 
-  vars:
-    new_username: santi
-
   vars_prompt:
+    - name: new_username
+      prompt: What is the username?
+      private: false
+      confirm: true
     - name: new_password
       prompt: "What is the password for the user?"
       private: true
@@ -31,3 +32,13 @@
       vars:
         base_wsl_username: "{{ new_username }}"
         base_wsl_password: "{{ new_password }}"
+    - vconsole
+    - localization
+  tasks:
+    - name: Next steps
+      ansible.builtin.debug:
+        msg: >
+          Initial setup is done and the user {{ new_username }}
+          was created with the password you selected.
+          Login as {{ new_username }} and run other playbooks to
+          finish your setup.

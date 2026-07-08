@@ -10,20 +10,11 @@
         msg: "The environment variable 'BW_SESSION' is missing! Log into bitwarden-cli"
       when: lookup('ansible.builtin.env', 'BW_SESSION') == ''
 
-    - name: Refresh package manager cache and upgrade the system
-      ansible.builtin.package:
-        update_cache: true
-        upgrade: true
-      become: true
-
   roles:
-    - vconsole
-    - localization
     - docker
     - git
     - mise
     - ai
     - file_manager
     - text_editor
-    - ufw
     - dotfiles
