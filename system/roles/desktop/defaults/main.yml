@@ -1,0 +1,30 @@
+---
+desktop_packages:
+  - xdg-user-dirs
+  - rofi
+  - firefox
+  - bitwarden
+  - calibre
+  - aerc
+  - caligula
+  - mpv
+  - hyprpaper
+  - hypridle
+  - hyprlock
+  - hyprshutdown
+  - wl-clipboard
+  - brightnessctl
+  - power-profiles-daemon
+  - python-gobject # for powerprofilesctl
+  - rofi
+  - mpv
+  - virt-manager
+
+desktop_user_services:
+  - hyprpaper
+  - hypridle
+
+desktop_system_services:
+  - power-profiles-daemon
+
+desktop_default_browser_entry: firefox.desktop

@@ -1,0 +1,6 @@
+---
+- name: Install AI packages
+  ansible.builtin.package:
+    name: "{{ ai_packages }}"
+    state: present
+  become: true

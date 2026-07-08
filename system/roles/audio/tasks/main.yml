@@ -1,0 +1,23 @@
+---
+- name: Install drivers
+  ansible.builtin.package:
+    name: "{{ audio_packages }}"
+    state: present
+  become: true
+
+- name: Ensures playerctld directory exists
+  ansible.builtin.file:
+    path: "{{ audio_systemd_user_path }}"
+    state: directory
+    mode: "0700"
+  become: false
+
+- name: Copies playerctld service
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ audio_systemd_user_path }}/{{ item }}"
+    mode: "0644"
+  loop: "{{ audio_user_services_files }}"
+  notify:
+    - start/enable audio services
+  become: false

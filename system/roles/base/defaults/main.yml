@@ -1,0 +1,28 @@
+---
+base_packages:
+  - base
+  - sudo
+  - jq
+  - fd
+  - ripgrep
+  - fzf
+  - zoxide
+  - git
+  - github-cli
+  - curl
+  - unzip
+  - less
+  - tmux
+  - man-db
+  - man-pages
+  - tldr
+  - btop
+  - eza
+  - bat
+  - bash-completion
+  - usage
+  - bitwarden-cli
+  - polkit
+  - starship
+  - ansible
+  - ansible-lint

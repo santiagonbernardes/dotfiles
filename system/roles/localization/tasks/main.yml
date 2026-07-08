@@ -1,0 +1,14 @@
+---
+- name: Ensure configuration files copied
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - locale.conf
+    - locale.gen
+  notify:
+    - generates localization
+  become: true

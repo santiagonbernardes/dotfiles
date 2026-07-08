@@ -1,0 +1,44 @@
+# vim:set ft=yaml.ansible:
+
+---
+- name: Sets up a WSL workstation
+  hosts: workstation
+
+  vars_prompt:
+    - name: new_username
+      prompt: What is the username?
+      private: false
+      confirm: true
+    - name: new_password
+      prompt: "What is the password for the user?"
+      private: true
+      confirm: true
+      encrypt: sha512_crypt
+
+  pre_tasks:
+    - name: Check if bitwarden cli is logged in
+      ansible.builtin.fail:
+        msg: "The environment variable 'BW_SESSION' is missing! Log into bitwarden-cli"
+      when: lookup('ansible.builtin.env', 'BW_SESSION') == ''
+
+    - name: Refresh package manager cache and upgrade the system
+      ansible.builtin.package:
+        update_cache: true
+        upgrade: true
+      become: true
+
+  roles:
+    - role: base_wsl
+      vars:
+        base_wsl_username: "{{ new_username }}"
+        base_wsl_password: "{{ new_password }}"
+    - vconsole
+    - localization
+  tasks:
+    - name: Next steps
+      ansible.builtin.debug:
+        msg: >
+          Initial setup is done and the user {{ new_username }}
+          was created with the password you selected.
+          Login as {{ new_username }} and run other playbooks to
+          finish your setup.

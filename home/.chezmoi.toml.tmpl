@@ -1,0 +1,21 @@
+{{- $fields := (bitwarden "item" "Dotfiles Input").fields -}}
+
+sourceDir = {{ .chezmoi.config.sourceDir | quote }}
+
+[bitwarden]
+  unlock = "auto"
+
+[data]
+{{- range $field := $fields }}
+  {{ $field.name }} = {{ $field.value | quote }}
+{{- end }}
+  font = "JetBrainsMono Nerd Font"
+
+[merge]
+  command = "nvim"
+  args = [
+    "-d",
+    {{ printf "%q" "{{ .Destination }}" }},
+    {{ printf "%q" "{{ .Source }}" }},
+    {{ printf "%q" "{{ .Target }}" }},
+  ]

@@ -1,0 +1,16 @@
+---
+- name: Install plymouth
+  ansible.builtin.package:
+    name: plymouth
+    state: present
+  become: true
+
+- name: Copy initramfs configuration
+  ansible.builtin.copy:
+    src: mkinitcpio.conf
+    dest: /etc/mkinitcpio.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: regenerate initramfs

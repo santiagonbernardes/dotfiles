@@ -1,0 +1,18 @@
+---
+window_manager_packages:
+  - hyprland
+  # Systemd startup
+  - uwsm
+  - libnewt
+  # Must have
+  - dunst
+  - libnotify
+  - xdg-desktop-portal-hyprland
+  - xdg-desktop-portal-gtk # file picker
+  - hyprpolkitagent
+  - qt5-wayland
+  - qt6-wayland
+  - ttf-jetbrains-mono-nerd
+  - noto-fonts
+  - noto-fonts-emoji
+  - noto-fonts-cjk

@@ -1,0 +1,17 @@
+---
+- name: Installs fonts
+  ansible.builtin.package:
+    name: terminus-font
+    state: present
+  become: true
+
+- name: Ensure configuration files copied
+  ansible.builtin.copy:
+    src: vconsole.conf
+    dest: /etc/vconsole.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - restart locale
+  become: true

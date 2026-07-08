@@ -1,0 +1,7 @@
+---
+git_packages:
+  - git
+  - github-cli
+  - lazygit
+
+git_bw_item_name: Github CLI

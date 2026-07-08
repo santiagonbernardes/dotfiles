@@ -1,0 +1,20 @@
+---
+- name: Install ssh packages
+  ansible.builtin.package:
+    name: "{{ ssh_packages }}"
+    state: present
+  become: true
+
+- name: Ensure .ssh directory
+  ansible.builtin.file:
+    path: "{{ ssh_directory }}"
+    state: directory
+    mode: "0700"
+  become: false
+
+- name: Ensure known_hosts file
+  ansible.builtin.file:
+    path: "{{ ssh_known_hosts_path }}"
+    state: touch
+    mode: "0600"
+  become: false

@@ -1,0 +1,5 @@
+---
+git_ssh_keys_endpoint: https://api.github.com/meta
+git_ssh_keys_api_version: 2026-03-10
+git_ssh_keys_api_accept_header: application/vnd.github+json
+git_hub_ssh_host: github.com

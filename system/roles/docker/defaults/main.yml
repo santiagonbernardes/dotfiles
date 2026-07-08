@@ -1,0 +1,9 @@
+---
+docker_packages:
+  - docker
+  - docker-buildx
+  - docker-compose
+  - nvidia-container-toolkit
+  - lazydocker
+
+docker_use_ufw_docker: false

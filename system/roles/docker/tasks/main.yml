@@ -1,0 +1,33 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ docker_packages }}"
+    state: present
+  become: true
+
+- name: Ensures docker groups
+  ansible.builtin.group:
+    name: docker
+    state: present
+  become: true
+
+- name: Adds user to docker group
+  ansible.builtin.user:
+    name: "{{ ansible_facts['user_id'] }}"
+    groups: docker
+    append: true
+  become: true
+
+- name: Start and enables docker services
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+  become: true
+
+- name: Set up ufw-docker
+  when: docker_use_ufw_docker | bool
+  ansible.builtin.import_role:
+    name: ufw
+  vars:
+    ufw_use_ufw_docker: true

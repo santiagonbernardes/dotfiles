@@ -1,0 +1,14 @@
+# NOTE: I want to remember this when I start working on the homelab
+---
+- name: Setup for bootstraping hosts
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Scan and add host key to known_hosts
+      ansible.builtin.known_hosts:
+      delegate_to: localhost
+      args:
+        name: "{{ inventory_hostname }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -q -t ed25519 ' + inventory_hostname) }}"
+        state: present

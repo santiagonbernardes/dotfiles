@@ -1,0 +1,20 @@
+# vim:set ft=yaml.ansible:
+
+---
+- name: Sets up a WSL workstation
+  hosts: workstation
+
+  pre_tasks:
+    - name: Check if bitwarden cli is logged in
+      ansible.builtin.fail:
+        msg: "The environment variable 'BW_SESSION' is missing! Log into bitwarden-cli"
+      when: lookup('ansible.builtin.env', 'BW_SESSION') == ''
+
+  roles:
+    - docker
+    - git
+    - mise
+    - ai
+    - file_manager
+    - text_editor
+    - dotfiles

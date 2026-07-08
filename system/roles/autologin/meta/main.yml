@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  license: MIT
+  author: Santiago Bernardes
+  description: Sets up autologin
+  min_ansible_version: "2.2"
+  galaxy_tags: []
+dependencies: []

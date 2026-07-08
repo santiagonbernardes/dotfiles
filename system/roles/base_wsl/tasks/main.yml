@@ -1,0 +1,36 @@
+---
+- name: "Creates the user {{ base_wsl_username }}"
+  ansible.builtin.user:
+    name: "{{ base_wsl_username }}"
+    password: "{{ base_wsl_password }}"
+    state: present
+    groups: wheel
+    append: true
+    shell: /bin/bash
+    update_password: on_create
+  become: true
+
+- name: "Change default user to {{ base_wsl_username }}"
+  ansible.builtin.template:
+    src: wsl.conf.j2
+    dest: /etc/wsl.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Setup sudoers
+  ansible.builtin.copy:
+    src: 10-wheel
+    dest: /etc/sudoers.d/10-wheel
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Append BW_SESSION
+  ansible.builtin.lineinfile:
+    path: "/home/{{ base_wsl_username }}/.bashrc"
+    line: "export BW_SESSION=\"{{ lookup('ansible.builtin.env', 'BW_SESSION') }}\""
+    insertafter: EOF
+  become: true

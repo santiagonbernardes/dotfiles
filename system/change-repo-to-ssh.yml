@@ -1,0 +1,38 @@
+---
+- name: Ensure this repository uses SSH
+  hosts: workstation
+
+  vars:
+    dev_repo_name: dotfiles
+
+  pre_tasks:
+    - name: Refresh package manager cache
+      ansible.builtin.package:
+        update_cache: true
+      become: true
+
+  roles:
+    - git
+
+  tasks:
+    - name: Get repository SSH URL
+      ansible.builtin.command:
+        cmd: >
+          gh repo view {{ dev_repo_name }}
+          --json sshUrl
+          --jq .sshUrl
+      register: dev_ssh_url
+      changed_when: false
+
+    - name: Debug
+      ansible.builtin.debug:
+        msg: "SSH url is: {{ dev_ssh_url.stdout }}"
+        verbosity: 1
+
+    - name: Ensure SSH origin
+      community.general.git_config:
+        repo: "{{ inventory_dir | dirname }}"
+        name: remote.origin.url
+        value: "{{ dev_ssh_url.stdout | trim }}"
+        scope: local
+        state: present

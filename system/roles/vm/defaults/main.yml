@@ -1,0 +1,12 @@
+---
+vm_packages:
+  - dnsmasq
+  - dmidecode
+  - libvirt
+  - qemu-full
+
+vm_groups:
+  - libvirt
+  - libvirt-qemu
+
+vm_network_interface: "virbr0"

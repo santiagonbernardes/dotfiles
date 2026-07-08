@@ -1,0 +1,16 @@
+---
+- name: Start/enable user services
+  ansible.builtin.service:
+    name: "{{ window_manager_user_services }}"
+    state: started
+    enabled: true
+    scope: user
+  listen: configure services
+
+- name: Start/enable system services
+  ansible.builtin.service:
+    name: "{{ window_manager_system_services }}"
+    state: started
+    enabled: true
+    become: true
+  listen: configure services
