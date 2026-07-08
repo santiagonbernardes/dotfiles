@@ -28,3 +28,25 @@
         stdin: "{{ git_token | trim }}"
       no_log: true
       changed_when: false
+
+    - name: Use GitHub CLI as credential helper
+      ansible.builtin.command:
+        cmd: gh auth setup-git
+      changed_when: false
+
+- name: Call GitHub's public ssh keys endpoint
+  ansible.builtin.uri:
+    url: "{{ git_ssh_keys_endpoint }}"
+    headers:
+      Accept: "{{ git_ssh_keys_api_accept_header }}"
+      X-GitHub-Api-Version: "{{ git_ssh_keys_api_version }}"
+    method: GET
+    body_format: json
+  register: git_api_response
+
+- name: Add ssh keys to known_hosts
+  ansible.builtin.known_hosts:
+    host: "{{ git_hub_ssh_host }}"
+    key: "{{ git_hub_ssh_host }} {{ item }}"
+    state: present
+  loop: "{{ git_api_response.json.ssh_keys }}"

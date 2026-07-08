@@ -7,8 +7,8 @@ ufw_default_outgoing: allow
 
 ufw_use_ufw_docker: false
 ufw_docker_ufw_version: "251123"
-ufw_docker_ufw_url: "https://raw.githubusercontent.com/chaifeng/ufw-docker/{{ docker_ufw_version }}/ufw-docker"
-ufw_docker_ufw_download_path: "/usr/local/bin/ufw-docker-{{ docker_ufw_version }}"
+ufw_docker_ufw_url: "https://raw.githubusercontent.com/chaifeng/ufw-docker/{{ ufw_docker_ufw_version }}/ufw-docker"
+ufw_docker_ufw_download_path: "/usr/local/bin/ufw-docker-{{ ufw_docker_ufw_version }}"
 ufw_docker_ufw_path: /usr/local/bin/ufw-docker
 
 ufw_docker_ufw_changed_files:
