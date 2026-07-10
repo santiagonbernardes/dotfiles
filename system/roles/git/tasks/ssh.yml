@@ -19,21 +19,22 @@
 - name: Get repository SSH URL
   ansible.builtin.command:
     cmd: >
-      gh repo view {{ dev_repo_name }}
+      gh repo view
+      "{{ git_automation_repo_name }}"
       --json sshUrl
       --jq .sshUrl
-  register: dev_ssh_url
+  register: git_ssh_url
   changed_when: false
 
 - name: Debug
   ansible.builtin.debug:
-    msg: "SSH url is: {{ dev_ssh_url.stdout }}"
+    msg: "SSH url is: {{ git_ssh_url.stdout }}"
     verbosity: 1
 
 - name: Ensure SSH origin
   community.general.git_config:
     repo: "{{ inventory_dir | dirname }}"
     name: remote.origin.url
-    value: "{{ dev_ssh_url.stdout | trim }}"
+    value: "{{ git_ssh_url.stdout | trim }}"
     scope: local
     state: present
