@@ -22,7 +22,7 @@ $pink = rgb(FF79C6)
 $pinkRaw = FF79C6
 $accent = $purple
 $accentRaw = $purpleRaw
-$font = JetBrainsMono Nerd Font
+$font = {{ .font }}
 $base = $background
 $text = $foreground
 $textAlpha = $foregroundRaw
@@ -37,7 +37,7 @@ general {
 background {
     monitor =
     # change to the path to your wallpaper
-    path = {{ joinPath .chezmoi.sourceDir "system" "wallpapers" "dracula" "1.png" }}
+    path = {{ joinPath .chezmoi.sourceDir "resources" "wallpapers" "dracula" "1.png" }}
     blur_passes = 0
     color = $base
 }
