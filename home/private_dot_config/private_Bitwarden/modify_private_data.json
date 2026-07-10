@@ -1,0 +1,21 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $raw := .chezmoi.stdin -}}
+{{- if eq $raw "" -}}
+  {{- $raw = "{}" -}}
+{{- end -}}
+{{- $input := fromJson $raw -}}
+{{- $userID := .bw_user_id -}}
+{{- $output := $input |
+    setValueAtPath "global_desktopSettings_browserIntegrationEnabled" true |
+    setValueAtPath "global_desktopSettings_closeToTray" true |
+    setValueAtPath "global_desktopSettings_openAtLogin" true |
+    setValueAtPath "global_desktopSettings_sshAgentEnabled" true |
+    setValueAtPath "global_desktopSettings_startToTray" true |
+    setValueAtPath "global_desktopSettings_trayEnabled" true |
+    setValueAtPath "global_theming_selection" "dark" |
+    setValueAtPath "userId" $userID |
+    setValueAtPath (printf "user_%s_vaultTimeoutSettings_vaultTimeoutAction" $userID) "lock" |
+    setValueAtPath (printf "user_%s_vaultTimeoutSettings_vaultTimeout" $userID) "onRestart" |
+    setValueAtPath (printf "user_%s_desktopSettings_sshAgentRememberAuthorizations" $userID) "rememberUntilLock"
+-}}
+{{- $output | toPrettyJson -}}
