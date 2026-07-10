@@ -15,10 +15,19 @@
     msg: "LUKS partition UUID is {{ bootloader_luks_uuid }}"
     verbosity: 1
 
+- name: Ensure directory exists
+  ansible.builtin.file:
+    state: directory
+    path: "{{ bootloader_base_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
 - name: Copy bootloader entries
   ansible.builtin.template:
     src: limine.conf.j2
-    dest: /boot/limine/limine.conf
+    dest: "{{ bootloader_base_path }}/limine.conf"
     owner: root
     group: root
     mode: "0644"
