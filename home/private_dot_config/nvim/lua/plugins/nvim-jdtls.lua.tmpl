@@ -12,7 +12,7 @@ return {
 				runtimes = {
 					{{ range $sorted }}
           {
-            name = {{ .name | quote }}
+            name = {{ .name | quote }},
             path = {{ .path | quote }}
           },
           {{ end }}
