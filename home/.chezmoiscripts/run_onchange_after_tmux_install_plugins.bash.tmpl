@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# mise config.toml hash:
+# {{ includeTemplate (joinPath "private_dot_config" "tmux" "tmux.conf.tmpl") . | sha256sum }}
+
+tmux new-session -d {{ joinPath .chezmoi.homeDir .tmux_tpm_path_rel_to_home "bin" "install_plugins" | quote }}

@@ -107,4 +107,4 @@ set -g @plugin 'dracula/tmux'
 set -g default-command "${SHELL}"
 
 # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-run "$XDG_DATA_HOME/.tmux/plugins/tpm/tpm"
+run {{ joinPath .chezmoi.homeDir .tmux_tpm_path_rel_to_home "tpm" | quote }}
