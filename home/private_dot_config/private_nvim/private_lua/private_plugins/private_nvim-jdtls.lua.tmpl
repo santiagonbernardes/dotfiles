@@ -1,0 +1,24 @@
+{{- $jdks := output "mise" "ls" "java" "--json" | fromJson -}}
+{{- $query := "sort_by(.version | split(\".\") | map(tonumber)) | reverse | map({name: (\"jdk-\" + .version), path: .install_path})" -}}
+{{- $sorted := index (jq $query $jdks) 0 -}}
+{{- if gt (len $sorted) 0 -}}
+return {
+	"mfussenegger/nvim-jdtls",
+	opts = function(_, opts)
+		opts.settings = opts.settings or {}
+		opts.settings.java = vim.tbl_deep_extend("force", opts.settings.java or {}, {
+      home = {{ (index $sorted 0).path | quote }},
+			configuration = {
+				runtimes = {
+					{{ range $sorted }}
+          {
+            name = {{ .name | quote }},
+            path = {{ .path | quote }}
+          },
+          {{ end }}
+				},
+			},
+		})
+	end,
+}
+{{- end -}}

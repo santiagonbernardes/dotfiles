@@ -10,6 +10,7 @@ sourceDir = {{ .chezmoi.config.sourceDir | quote }}
   {{ $field.name }} = {{ $field.value | quote }}
 {{- end }}
   font = "JetBrainsMono Nerd Font"
+  tmux_tpm_path_rel_to_home = ".local/share/.tmux/plugins/tpm"
 
 [merge]
   command = "nvim"

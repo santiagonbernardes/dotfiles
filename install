@@ -125,7 +125,7 @@ class Config:
     repository: str = "https://github.com/santiagonbernardes/dotfiles.git"
     branch: str = "main"
     system_automation_folder: str = "system"
-    system_automation_file: str = "main.yml"
+    system_automation_file: str = "site.yml"
     destination: Path = Path.home() / ".local/share/"
     wait_for_seconds: int = 5
     log_level: int = logging.INFO

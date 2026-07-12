@@ -29,5 +29,5 @@
 
 - name: Install ufw-docker
   ansible.builtin.import_tasks:
-    file: ufw-docker.yml
+    file: ufw_docker.yml
   when: ufw_use_ufw_docker | bool

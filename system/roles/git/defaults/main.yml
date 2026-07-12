@@ -5,3 +5,4 @@ git_packages:
   - lazygit
 
 git_bw_item_name: Github CLI
+git_automation_repo_name: dotfiles
