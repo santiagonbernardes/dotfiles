@@ -9,15 +9,31 @@ import subprocess
 from enum import Enum
 from typing import Any, Final, Protocol
 
-_DEFAULT_SUBPROCESS_ARGS: Final[dict[str, Any]] = {
-    "check": True,
-    "capture_output": True,
-    "text": True,
-}
+
+class Osd:
+    @staticmethod
+    def show(percentage: int, icon: str) -> None:
+        Command.run(
+            "notify-send",
+            "-h",
+            f"int:value:{percentage}",
+            "-h",
+            "boolean:transient:true",
+            " ",
+            f"{icon}",
+        )
 
 
-def run(*args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(args, **_DEFAULT_SUBPROCESS_ARGS)
+class Command:
+    _DEFAULT_SUBPROCESS_ARGS: Final[dict[str, Any]] = {
+        "check": True,
+        "capture_output": True,
+        "text": True,
+    }
+
+    @classmethod
+    def run(cls, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(args, **cls._DEFAULT_SUBPROCESS_ARGS)
 
 
 class OsdDevice(Protocol):
@@ -72,7 +88,7 @@ class Audio(OsdDevice):
     def _execute_command(
         self, cmd_args: tuple[str, ...]
     ) -> subprocess.CompletedProcess[str]:
-        return run("wpctl", *cmd_args)
+        return Command.run("wpctl", *cmd_args)
 
     def _get_volume_info(self) -> tuple[float, bool]:
         cmd_output: str = self._execute_command(
@@ -127,18 +143,7 @@ def main() -> None:
     action, device = parse_args()
     action.apply_to(device)
     icon: str = device.get_icon_for(action)
-
-    subprocess.run(
-        (
-            "notify-send",
-            "-h",
-            f"int:value:{device.percentage}",
-            "-h",
-            "boolean:transient:true",
-            " ",
-            f"{icon}",
-        )
-    )
+    Osd.show(device.percentage, icon)
 
 
 if __name__ == "__main__":
