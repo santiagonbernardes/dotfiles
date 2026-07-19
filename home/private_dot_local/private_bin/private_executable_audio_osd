@@ -10,6 +10,18 @@ from enum import Enum
 from typing import Any, Final, Protocol
 
 
+class Command:
+    _DEFAULT_SUBPROCESS_ARGS: Final[dict[str, Any]] = {
+        "check": True,
+        "capture_output": True,
+        "text": True,
+    }
+
+    @classmethod
+    def run(cls, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(args, **cls._DEFAULT_SUBPROCESS_ARGS)
+
+
 class Osd:
     @staticmethod
     def show(percentage: int, icon: str) -> None:
@@ -22,18 +34,6 @@ class Osd:
             " ",
             f"{icon}",
         )
-
-
-class Command:
-    _DEFAULT_SUBPROCESS_ARGS: Final[dict[str, Any]] = {
-        "check": True,
-        "capture_output": True,
-        "text": True,
-    }
-
-    @classmethod
-    def run(cls, *args: str) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(args, **cls._DEFAULT_SUBPROCESS_ARGS)
 
 
 class OsdDevice(Protocol):
@@ -79,11 +79,21 @@ class Audio(OsdDevice):
 
     @property
     def percentage(self) -> int:
+        volume: float
         volume, _ = self._get_volume_info()
         return int(volume * 100)
 
     def get_icon_for(self, action: Action) -> str:
-        return ""
+        muted: bool
+        _, muted = self._get_volume_info()
+        if muted:
+            return ""
+
+        match action:
+            case Action.MORE | Action.TOGGLE:
+                return ""
+            case Action.LESS:
+                return ""
 
     def _execute_command(
         self, cmd_args: tuple[str, ...]
