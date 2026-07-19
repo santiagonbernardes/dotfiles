@@ -2,10 +2,22 @@
 
 
 from __future__ import annotations
+
 import argparse
+import re
 import subprocess
 from enum import Enum
 from typing import Any, Final, Protocol
+
+_DEFAULT_SUBPROCESS_ARGS: Final[dict[str, Any]] = {
+    "check": True,
+    "capture_output": True,
+    "text": True,
+}
+
+
+def run(*args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(args, **_DEFAULT_SUBPROCESS_ARGS)
 
 
 class OsdDevice(Protocol):
@@ -35,13 +47,10 @@ class Action(Enum):
 
 
 class Audio(OsdDevice):
-    _DEFAULT_CMD_OPTS: dict[str, Any] = {
-        "capture_output": True,
-        "text": True,
-        "check": True,
-    }
-
-    _DEFAULT_SINK: str = "@DEFAULT_AUDIO_SINK@"
+    _DEFAULT_SINK: Final[str] = "@DEFAULT_AUDIO_SINK@"
+    _VOLUME_PATTERN: Final[re.Pattern[str]] = re.compile(
+        r"Volume:\s*([\d.]+)\s*(\[MUTED\])?"
+    )
 
     def more(self) -> None:
         self._execute_command(("set-volume", "-l", "1", self._DEFAULT_SINK, "5%+"))
@@ -54,8 +63,7 @@ class Audio(OsdDevice):
 
     @property
     def percentage(self) -> int:
-        raw_volume: str = self._get_raw_volume()
-        volume: float = float(raw_volume.split(":")[1].strip())
+        volume, _ = self._get_volume_info()
         return int(volume * 100)
 
     def get_icon_for(self, action: Action) -> str:
@@ -64,10 +72,19 @@ class Audio(OsdDevice):
     def _execute_command(
         self, cmd_args: tuple[str, ...]
     ) -> subprocess.CompletedProcess[str]:
-        return subprocess.run(("wpctl", *cmd_args), **self._DEFAULT_CMD_OPTS)
+        return run("wpctl", *cmd_args)
 
-    def _get_raw_volume(self) -> str:
-        return self._execute_command(("get-volume", self._DEFAULT_SINK)).stdout.strip()
+    def _get_volume_info(self) -> tuple[float, bool]:
+        cmd_output: str = self._execute_command(
+            ("get-volume", self._DEFAULT_SINK)
+        ).stdout.strip()
+        matches = self._VOLUME_PATTERN.search(cmd_output)
+
+        if matches is None:
+            raise ValueError(
+                "wpctl interface might have changed, run the command and verify the output"
+            )
+        return float(matches.group(1)), matches.group(2) is not None
 
 
 class Brightness(OsdDevice):
