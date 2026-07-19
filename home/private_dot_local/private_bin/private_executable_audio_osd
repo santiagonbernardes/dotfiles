@@ -3,7 +3,6 @@
 
 import argparse
 import subprocess
-from abc import abstractmethod
 from enum import Enum
 from typing import Any, Final, Protocol
 
@@ -15,31 +14,19 @@ class Action(Enum):
 
 
 class OsdDevice(Protocol):
-    @abstractmethod
-    def more(self) -> None:
-        raise NotImplementedError
+    def more(self) -> None: ...
 
-    @abstractmethod
-    def less(self) -> None:
-        raise NotImplementedError
+    def less(self) -> None: ...
 
-    @abstractmethod
-    def toggle(self) -> None:
-        raise NotImplementedError
+    def toggle(self) -> None: ...
 
     @property
-    @abstractmethod
-    def current_value(self) -> str:
-        raise NotImplementedError
+    def current_value_percent(self) -> float: ...
+
+    def get_icon_for(self, action: Action) -> str: ...
 
 
-class Displayable(Protocol):
-    @abstractmethod
-    def get_icon_for(self, action: Action) -> str:
-        raise NotImplementedError
-
-
-class Audio(OsdDevice, Displayable):
+class Audio(OsdDevice):
     _DEFAULT_CMD_OPTS: dict[str, Any] = {
         "capture_output": True,
         "text": True,
@@ -58,9 +45,9 @@ class Audio(OsdDevice, Displayable):
         self._execute_command(("set-mute", self._DEFAULT_SINK, "toggle"))
 
     @property
-    def current_value(self) -> str:
+    def current_value_percent(self) -> float:
         raw_volume: str = self._get_raw_volume()
-        return raw_volume.split(":")[1].strip()
+        return float(raw_volume.split(":")[1].strip()) * 100
 
     def get_icon_for(self, action: Action) -> str:
         return ""
@@ -85,8 +72,8 @@ class Brightness(OsdDevice):
         pass
 
     @property
-    def current_value(self) -> str:
-        return ""
+    def current_value_percent(self) -> float:
+        return 0
 
     def get_icon_for(self, action: Action) -> str:
         return ""
@@ -97,13 +84,8 @@ _DEVICES: Final[dict[str, OsdDevice]] = {
     "brightness": Brightness(),
 }
 
-_DISPLAYABLE: Final[dict[str, Displayable]] = {
-    "audio": Audio(),
-    "brightness": Brightness(),
-}
 
-
-def parse_args() -> tuple[Action, OsdDevice, Displayable]:
+def parse_args() -> tuple[Action, OsdDevice]:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
         prog="OSD", description="CLI to control OSD", suggest_on_error=True
     )
@@ -112,11 +94,11 @@ def parse_args() -> tuple[Action, OsdDevice, Displayable]:
     parser.add_argument("device", choices=tuple(_DEVICES.keys()))
     args: argparse.Namespace = parser.parse_args()
 
-    return (Action(args.action), _DEVICES[args.device], _DISPLAYABLE[args.device])
+    return Action(args.action), _DEVICES[args.device]
 
 
 def main() -> None:
-    action, device, displayable = parse_args()
+    action, device = parse_args()
     match action:
         case Action.MORE:
             device.more()
@@ -125,14 +107,12 @@ def main() -> None:
         case Action.TOGGLE:
             device.toggle()
 
-    icon: str = displayable.get_icon_for(action)
-    value: float = float(device.current_value) * 100
-    print(f"Value is {value}")
+    icon: str = device.get_icon_for(action)
     subprocess.run(
         (
             "notify-send",
             "-h",
-            f"int:value:{value}",
+            f"int:value:{device.current_value_percent}",
             "-h",
             "boolean:transient:true",
             " ",
