@@ -1,30 +1,145 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-# Sets volume/toggle mute and displays a dunst notification.
-SINK="@DEFAULT_AUDIO_SINK@"
 
-case "$1" in
-more)
-  wpctl set-volume -l 1 "$SINK" 5%+
-  ;;
-less)
-  wpctl set-volume "$SINK" 5%-
-  ;;
-toggle-mute)
-  wpctl set-mute "$SINK" toggle
-  ;;
-*)
-  echo "Usage: $(basename "$0") [more|less|toggle-mute]" >&2
-  exit 1
-  ;;
-esac
+import argparse
+import subprocess
+from abc import abstractmethod
+from enum import Enum
+from typing import Any, Final, Protocol
 
-icon=""
-raw_volume=$(wpctl get-volume "$SINK")
-volume=$(echo "$raw_volume" | awk '{print $2 * 100}')
 
-if echo "$raw_volume" | grep -qi "muted"; then
-  icon=""
-fi
+class Action(Enum):
+    MORE = "more"
+    LESS = "less"
+    TOGGLE = "toggle"
 
-notify-send -h int:value:"$volume" -h boolean:transient:true "" "$icon"
+
+class OsdDevice(Protocol):
+    @abstractmethod
+    def more(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def less(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def toggle(self) -> None:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def current_value(self) -> str:
+        raise NotImplementedError
+
+
+class Displayable(Protocol):
+    @abstractmethod
+    def get_icon_for(self, action: Action) -> str:
+        raise NotImplementedError
+
+
+class Audio(OsdDevice, Displayable):
+    _DEFAULT_CMD_OPTS: dict[str, Any] = {
+        "capture_output": True,
+        "text": True,
+        "check": True,
+    }
+
+    _DEFAULT_SINK: str = "@DEFAULT_AUDIO_SINK@"
+
+    def more(self) -> None:
+        self._execute_command(("set-volume", "-l", "1", self._DEFAULT_SINK, "5%+"))
+
+    def less(self) -> None:
+        self._execute_command(("set-volume", self._DEFAULT_SINK, "5%-"))
+
+    def toggle(self) -> None:
+        self._execute_command(("set-mute", self._DEFAULT_SINK, "toggle"))
+
+    @property
+    def current_value(self) -> str:
+        raw_volume: str = self._get_raw_volume()
+        return raw_volume.split(":")[1].strip()
+
+    def get_icon_for(self, action: Action) -> str:
+        return ""
+
+    def _execute_command(
+        self, cmd_args: tuple[str, ...]
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(("wpctl", *cmd_args), **self._DEFAULT_CMD_OPTS)
+
+    def _get_raw_volume(self) -> str:
+        return self._execute_command(("get-volume", self._DEFAULT_SINK)).stdout.strip()
+
+
+class Brightness(OsdDevice):
+    def more(self) -> None:
+        pass
+
+    def less(self) -> None:
+        pass
+
+    def toggle(self) -> None:
+        pass
+
+    @property
+    def current_value(self) -> str:
+        return ""
+
+    def get_icon_for(self, action: Action) -> str:
+        return ""
+
+
+_DEVICES: Final[dict[str, OsdDevice]] = {
+    "audio": Audio(),
+    "brightness": Brightness(),
+}
+
+_DISPLAYABLE: Final[dict[str, Displayable]] = {
+    "audio": Audio(),
+    "brightness": Brightness(),
+}
+
+
+def parse_args() -> tuple[Action, OsdDevice, Displayable]:
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        prog="OSD", description="CLI to control OSD", suggest_on_error=True
+    )
+
+    parser.add_argument("action", choices=tuple(action.value for action in Action))
+    parser.add_argument("device", choices=tuple(_DEVICES.keys()))
+    args: argparse.Namespace = parser.parse_args()
+
+    return (Action(args.action), _DEVICES[args.device], _DISPLAYABLE[args.device])
+
+
+def main() -> None:
+    action, device, displayable = parse_args()
+    match action:
+        case Action.MORE:
+            device.more()
+        case Action.LESS:
+            device.less()
+        case Action.TOGGLE:
+            device.toggle()
+
+    icon: str = displayable.get_icon_for(action)
+    value: float = float(device.current_value) * 100
+    print(f"Value is {value}")
+    subprocess.run(
+        (
+            "notify-send",
+            "-h",
+            f"int:value:{value}",
+            "-h",
+            "boolean:transient:true",
+            " ",
+            f"{icon}",
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()
