@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+
+
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+from enum import Enum
+from typing import Any, Final, Optional, Protocol
+
+
+class Command:
+    _DEFAULT_SUBPROCESS_ARGS: Final[dict[str, Any]] = {
+        "check": True,
+        "capture_output": True,
+        "text": True,
+    }
+
+    @classmethod
+    def run(cls, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(args, **cls._DEFAULT_SUBPROCESS_ARGS)
+
+
+class Osd:
+    @staticmethod
+    def show(percentage: int, icon: str) -> None:
+        Command.run(
+            "notify-send",
+            "-h",
+            f"int:value:{percentage}",
+            "-h",
+            "boolean:transient:true",
+            " ",
+            f"{icon}",
+        )
+
+
+class OsdDevice(Protocol):
+    def more(self) -> None: ...
+
+    def less(self) -> None: ...
+
+    def toggle(self) -> None: ...
+
+    @property
+    def percentage(self) -> int: ...
+
+    def get_icon_for(self, action: Action) -> str: ...
+
+
+class Action(Enum):
+    MORE = "more"
+    LESS = "less"
+    TOGGLE = "toggle"
+
+    def apply_to(self, device: OsdDevice) -> None:
+        {
+            Action.MORE: device.more,
+            Action.LESS: device.less,
+            Action.TOGGLE: device.toggle,
+        }[self]()
+
+
+class Audio(OsdDevice):
+    _DEFAULT_SINK: Final[str] = "@DEFAULT_AUDIO_SINK@"
+    _VOLUME_PATTERN: Final[re.Pattern[str]] = re.compile(
+        r"Volume:\s*([\d.]+)\s*(\[MUTED\])?"
+    )
+
+    def more(self) -> None:
+        self._execute_command(("set-volume", "-l", "1", self._DEFAULT_SINK, "5%+"))
+
+    def less(self) -> None:
+        self._execute_command(("set-volume", self._DEFAULT_SINK, "5%-"))
+
+    def toggle(self) -> None:
+        self._execute_command(("set-mute", self._DEFAULT_SINK, "toggle"))
+
+    @property
+    def percentage(self) -> int:
+        volume: float
+        volume, _ = self._get_info()
+        return round(volume * 100)
+
+    def get_icon_for(self, action: Action) -> str:
+        muted: bool
+        _, muted = self._get_info()
+        if muted:
+            return ""
+
+        match action:
+            case Action.MORE | Action.TOGGLE:
+                return ""
+            case Action.LESS:
+                return ""
+
+    def _execute_command(
+        self, cmd_args: tuple[str, ...]
+    ) -> subprocess.CompletedProcess[str]:
+        return Command.run("wpctl", *cmd_args)
+
+    def _get_info(self) -> tuple[float, bool]:
+        cmd_output: str = self._execute_command(
+            ("get-volume", self._DEFAULT_SINK)
+        ).stdout.strip()
+        matches: Optional[re.Match[str]] = self._VOLUME_PATTERN.search(cmd_output)
+
+        if matches is None:
+            raise ValueError(
+                "wpctl interface might have changed, run the command and verify the output"
+            )
+        return float(matches.group(1)), matches.group(2) is not None
+
+
+class LaptopScreen(OsdDevice):
+    def more(self) -> None:
+        pass
+
+    def less(self) -> None:
+        pass
+
+    def toggle(self) -> None:
+        pass
+
+    @property
+    def percentage(self) -> int:
+        return 0
+
+    def get_icon_for(self, action: Action) -> str:
+        return ""
+
+
+class ExternalMonitor(OsdDevice):
+    # TODO: The performance sucks, fix it.
+    _BRIGHTNESS_PATTERN: Final[re.Pattern[str]] = re.compile(
+        r"current value\s*=\s*(\d+),\s*max value\s*=\s*(\d+)"
+    )
+    _MIN_VALUE: Final[int] = 1
+    _INTERVAL: Final[str] = "10"
+
+    def more(self) -> None:
+        self._execute_command(("setvcp", "10", "+", self._INTERVAL))
+
+    def less(self) -> None:
+        self._execute_command(("setvcp", "10", "-", self._INTERVAL))
+
+    def toggle(self) -> None:
+        current: int
+        max: int
+        value: int
+
+        current, max = self._get_info()
+        mid: int = max // 2
+
+        if current >= mid:
+            value = self._MIN_VALUE
+        else:
+            value = max
+
+        self._execute_command(("setvcp", "10", str(value)))
+
+    @property
+    def percentage(self) -> int:
+        current: int
+        max: int
+
+        current, max = self._get_info()
+        percentage: float = (current / max) * 100
+
+        return round(percentage)
+
+    def get_icon_for(self, action: Action) -> str:
+        match action:
+            case Action.MORE:
+                return "󰃠"
+            case Action.LESS:
+                return "󰃝"
+            case Action.TOGGLE:
+                current: int
+                current, _ = self._get_info()
+                if current == self._MIN_VALUE:
+                    return "󰃞"
+
+                return self.get_icon_for(Action.MORE)
+
+    def _execute_command(
+        self, cmd_args: tuple[str, ...]
+    ) -> subprocess.CompletedProcess[str]:
+        return Command.run("ddcutil", "--display", "1", *cmd_args)
+
+    def _get_info(self) -> tuple[int, int]:
+        raw_info: str = self._execute_command(("getvcp", "10")).stdout.strip()
+        matches: Optional[re.Match[str]] = self._BRIGHTNESS_PATTERN.search(raw_info)
+
+        if not matches:
+            raise ValueError(
+                "ddcutil --display getvcp returned an unexpected string, run the command and check the output"
+            )
+
+        return int(matches.group(1)), int(matches.group(2))
+
+
+_DEVICES: Final[dict[str, OsdDevice]] = {
+    "audio": Audio(),
+    "brightness": ExternalMonitor(),
+}
+
+
+def parse_args() -> tuple[Action, OsdDevice]:
+    parser: argparse.ArgumentParser = argparse.ArgumentParser(
+        prog="OSD", description="CLI to control OSD", suggest_on_error=True
+    )
+
+    parser.add_argument("action", choices=tuple(action.value for action in Action))
+    parser.add_argument("device", choices=tuple(_DEVICES.keys()))
+    args: argparse.Namespace = parser.parse_args()
+
+    return Action(args.action), _DEVICES[args.device]
+
+
+def main() -> None:
+    action, device = parse_args()
+    action.apply_to(device)
+    icon: str = device.get_icon_for(action)
+    Osd.show(device.percentage, icon)
+
+
+if __name__ == "__main__":
+    main()
