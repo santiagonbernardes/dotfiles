@@ -7,7 +7,7 @@ import argparse
 import re
 import subprocess
 from enum import Enum
-from typing import Any, Final, Protocol
+from typing import Any, Final, Optional, Protocol
 
 
 class Command:
@@ -80,12 +80,12 @@ class Audio(OsdDevice):
     @property
     def percentage(self) -> int:
         volume: float
-        volume, _ = self._get_volume_info()
-        return int(volume * 100)
+        volume, _ = self._get_info()
+        return round(volume * 100)
 
     def get_icon_for(self, action: Action) -> str:
         muted: bool
-        _, muted = self._get_volume_info()
+        _, muted = self._get_info()
         if muted:
             return ""
 
@@ -100,11 +100,11 @@ class Audio(OsdDevice):
     ) -> subprocess.CompletedProcess[str]:
         return Command.run("wpctl", *cmd_args)
 
-    def _get_volume_info(self) -> tuple[float, bool]:
+    def _get_info(self) -> tuple[float, bool]:
         cmd_output: str = self._execute_command(
             ("get-volume", self._DEFAULT_SINK)
         ).stdout.strip()
-        matches = self._VOLUME_PATTERN.search(cmd_output)
+        matches: Optional[re.Match[str]] = self._VOLUME_PATTERN.search(cmd_output)
 
         if matches is None:
             raise ValueError(
@@ -113,7 +113,7 @@ class Audio(OsdDevice):
         return float(matches.group(1)), matches.group(2) is not None
 
 
-class Brightness(OsdDevice):
+class LaptopScreen(OsdDevice):
     def more(self) -> None:
         pass
 
@@ -131,9 +131,79 @@ class Brightness(OsdDevice):
         return ""
 
 
+class ExternalMonitor(OsdDevice):
+    # TODO: The performance sucks, fix it.
+    _BRIGHTNESS_PATTERN: Final[re.Pattern[str]] = re.compile(
+        r"current value\s*=\s*(\d+),\s*max value\s*=\s*(\d+)"
+    )
+    _MIN_VALUE: Final[int] = 1
+    _INTERVAL: Final[str] = "10"
+
+    def more(self) -> None:
+        self._execute_command(("setvcp", "10", "+", self._INTERVAL))
+
+    def less(self) -> None:
+        self._execute_command(("setvcp", "10", "-", self._INTERVAL))
+
+    def toggle(self) -> None:
+        current: int
+        max: int
+        value: int
+
+        current, max = self._get_info()
+        mid: int = max // 2
+
+        if current >= mid:
+            value = self._MIN_VALUE
+        else:
+            value = max
+
+        self._execute_command(("setvcp", "10", str(value)))
+
+    @property
+    def percentage(self) -> int:
+        current: int
+        max: int
+
+        current, max = self._get_info()
+        percentage: float = (current / max) * 100
+
+        return round(percentage)
+
+    def get_icon_for(self, action: Action) -> str:
+        match action:
+            case Action.MORE:
+                return "󰃠"
+            case Action.LESS:
+                return "󰃝"
+            case Action.TOGGLE:
+                current: int
+                current, _ = self._get_info()
+                if current == self._MIN_VALUE:
+                    return "󰃞"
+
+                return self.get_icon_for(Action.MORE)
+
+    def _execute_command(
+        self, cmd_args: tuple[str, ...]
+    ) -> subprocess.CompletedProcess[str]:
+        return Command.run("ddcutil", "--display", "1", *cmd_args)
+
+    def _get_info(self) -> tuple[int, int]:
+        raw_info: str = self._execute_command(("getvcp", "10")).stdout.strip()
+        matches: Optional[re.Match[str]] = self._BRIGHTNESS_PATTERN.search(raw_info)
+
+        if not matches:
+            raise ValueError(
+                "ddcutil --display getvcp returned an unexpected string, run the command and check the output"
+            )
+
+        return int(matches.group(1)), int(matches.group(2))
+
+
 _DEVICES: Final[dict[str, OsdDevice]] = {
     "audio": Audio(),
-    "brightness": Brightness(),
+    "brightness": ExternalMonitor(),
 }
 
 
