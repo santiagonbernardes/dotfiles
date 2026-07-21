@@ -39,14 +39,15 @@ class Osd:
 
 class FocusedDisplay:
     def __init__(self) -> None:
-        self._manufacturer: str
-        self._is_laptop: bool
+        self._manufacturer: Optional[str] = None
+        self._is_laptop: Optional[bool] = None
 
     @property
     def manufacturer(self) -> str:
         if self._manufacturer is None:
             self._init()
 
+        assert self._manufacturer is not None
         return self._manufacturer
 
     @property
@@ -54,6 +55,7 @@ class FocusedDisplay:
         if self._is_laptop is None:
             self._init()
 
+        assert self._is_laptop is not None
         return self._is_laptop
 
     def _init(self) -> None:
@@ -77,7 +79,7 @@ class FocusedDisplay:
 
     @classmethod
     def _get_monitor_data(cls) -> list[dict[str, Any]]:
-        raw_monitor_data: str = Command.run("hyprctl", "monitor", "-j").stdout.strip()
+        raw_monitor_data: str = Command.run("hyprctl", "monitors", "-j").stdout.strip()
         return json.loads(raw_monitor_data)
 
     @classmethod
@@ -163,28 +165,64 @@ class Audio(OsdDevice):
 
 
 class LaptopDisplay(OsdDevice):
-    # "brightnessctl -e4 -n2 set 5%+"
+    _DEVICE_NAME: Final[str] = "intel_backlight"
+    _MIN_VALUE: Final[int] = 5
 
     def more(self) -> None:
-        pass
+        self._execute_command(("set", "5%+"))
 
     def less(self) -> None:
-        pass
+        self._execute_command(("set", "5%-"))
 
     def toggle(self) -> None:
-        pass
+        max: int = self._max()
+        mid: int = max // 2
+        value: int
+
+        if self._current() >= mid:
+            value = self._MIN_VALUE
+        else:
+            value = max
+
+        self._execute_command(("set", str(value)))
 
     @property
     def percentage(self) -> int:
-        return 0
+        current: int = self._current()
+        max: int = self._max()
+
+        percentage: float = (current / max) * 100
+
+        return round(percentage)
 
     def get_icon_for(self, action: Action) -> str:
-        return ""
+        match action:
+            case Action.MORE:
+                return "󰃠"
+            case Action.LESS:
+                return "󰃝"
+            case Action.TOGGLE:
+                if self._current() == self._MIN_VALUE:
+                    return "󰃞"
+
+                return self.get_icon_for(Action.MORE)
+
+    def _current(self) -> int:
+        return int(self._execute_command(("get",)).stdout.strip())
+
+    def _max(self) -> int:
+        return int(self._execute_command(("max",)).stdout.strip())
 
     def _execute_command(
         self, cmd_args: tuple[str, ...]
     ) -> subprocess.CompletedProcess[str]:
-        return Command.run("brightnessctl", "-e4", "-n2", *cmd_args)
+        return Command.run(
+            "brightnessctl",
+            f"--device={self._DEVICE_NAME}",
+            f"--min-value={self._MIN_VALUE}",
+            "--machine-readable",
+            *cmd_args,
+        )
 
 
 class ExternalDisplay(OsdDevice):
