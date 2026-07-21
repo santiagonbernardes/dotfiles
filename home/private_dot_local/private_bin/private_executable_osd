@@ -28,11 +28,17 @@ class Osd:
     def show(percentage: int, icon: str) -> None:
         Command.run(
             "notify-send",
+            "-a",
+            "OSD",
+            "-t",
+            "500",
+            "-c",
+            "device",
             "-h",
             f"int:value:{percentage}",
             "-h",
             "boolean:transient:true",
-            " ",
+            "OSD",
             f"{icon}",
         )
 
