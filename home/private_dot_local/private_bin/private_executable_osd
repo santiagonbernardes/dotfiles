@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 from enum import Enum
@@ -34,6 +35,54 @@ class Osd:
             " ",
             f"{icon}",
         )
+
+
+class FocusedDisplay:
+    def __init__(self) -> None:
+        self._manufacturer: str
+        self._is_laptop: bool
+
+    @property
+    def manufacturer(self) -> str:
+        if self._manufacturer is None:
+            self._init()
+
+        return self._manufacturer
+
+    @property
+    def is_laptop(self) -> bool:
+        if self._is_laptop is None:
+            self._init()
+
+        return self._is_laptop
+
+    def _init(self) -> None:
+        focused_monitor: Optional[dict[str, Any]] = next(
+            (
+                monitor
+                for monitor in self._get_monitor_data()
+                if self._is_focused(monitor)
+            ),
+            None,
+        )
+
+        if not focused_monitor:
+            raise ValueError
+
+        manufacturer: str = focused_monitor["make"]
+        name: str = focused_monitor["name"]
+
+        self._manufacturer = manufacturer
+        self._is_laptop = name.lower().startswith("edp")
+
+    @classmethod
+    def _get_monitor_data(cls) -> list[dict[str, Any]]:
+        raw_monitor_data: str = Command.run("hyprctl", "monitor", "-j").stdout.strip()
+        return json.loads(raw_monitor_data)
+
+    @classmethod
+    def _is_focused(cls, monitor_data: dict[str, Any]) -> bool:
+        return monitor_data.get("focused", False)
 
 
 class OsdDevice(Protocol):
@@ -113,7 +162,9 @@ class Audio(OsdDevice):
         return float(matches.group(1)), matches.group(2) is not None
 
 
-class LaptopScreen(OsdDevice):
+class LaptopDisplay(OsdDevice):
+    # "brightnessctl -e4 -n2 set 5%+"
+
     def more(self) -> None:
         pass
 
@@ -130,8 +181,13 @@ class LaptopScreen(OsdDevice):
     def get_icon_for(self, action: Action) -> str:
         return ""
 
+    def _execute_command(
+        self, cmd_args: tuple[str, ...]
+    ) -> subprocess.CompletedProcess[str]:
+        return Command.run("brightnessctl", "-e4", "-n2", *cmd_args)
 
-class ExternalMonitor(OsdDevice):
+
+class ExternalDisplay(OsdDevice):
     # TODO: The performance sucks, fix it.
     _BRIGHTNESS_PATTERN: Final[re.Pattern[str]] = re.compile(
         r"current value\s*=\s*(\d+),\s*max value\s*=\s*(\d+)"
@@ -203,8 +259,20 @@ class ExternalMonitor(OsdDevice):
 
 _DEVICES: Final[dict[str, OsdDevice]] = {
     "audio": Audio(),
-    "brightness": ExternalMonitor(),
+    "brightness": ExternalDisplay(),
 }
+
+
+def device_factory(device: str) -> OsdDevice:
+    match device:
+        case "audio":
+            return Audio()
+        case "brightness":
+            if FocusedDisplay().is_laptop:
+                return LaptopDisplay()
+            return ExternalDisplay()
+        case _:
+            raise ValueError()
 
 
 def parse_args() -> tuple[Action, OsdDevice]:
@@ -216,7 +284,7 @@ def parse_args() -> tuple[Action, OsdDevice]:
     parser.add_argument("device", choices=tuple(_DEVICES.keys()))
     args: argparse.Namespace = parser.parse_args()
 
-    return Action(args.action), _DEVICES[args.device]
+    return Action(args.action), device_factory(args.device)
 
 
 def main() -> None:
