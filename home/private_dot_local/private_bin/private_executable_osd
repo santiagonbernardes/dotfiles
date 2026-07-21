@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 from enum import Enum
@@ -27,13 +28,69 @@ class Osd:
     def show(percentage: int, icon: str) -> None:
         Command.run(
             "notify-send",
+            "-a",
+            "OSD",
+            "-t",
+            "500",
+            "-c",
+            "device",
             "-h",
             f"int:value:{percentage}",
             "-h",
             "boolean:transient:true",
-            " ",
+            "OSD",
             f"{icon}",
         )
+
+
+class FocusedDisplay:
+    def __init__(self) -> None:
+        self._manufacturer: Optional[str] = None
+        self._is_laptop: Optional[bool] = None
+
+    @property
+    def manufacturer(self) -> str:
+        if self._manufacturer is None:
+            self._init()
+
+        assert self._manufacturer is not None
+        return self._manufacturer
+
+    @property
+    def is_laptop(self) -> bool:
+        if self._is_laptop is None:
+            self._init()
+
+        assert self._is_laptop is not None
+        return self._is_laptop
+
+    def _init(self) -> None:
+        focused_monitor: Optional[dict[str, Any]] = next(
+            (
+                monitor
+                for monitor in self._get_monitor_data()
+                if self._is_focused(monitor)
+            ),
+            None,
+        )
+
+        if not focused_monitor:
+            raise ValueError
+
+        manufacturer: str = focused_monitor["make"]
+        name: str = focused_monitor["name"]
+
+        self._manufacturer = manufacturer
+        self._is_laptop = name.lower().startswith("edp")
+
+    @classmethod
+    def _get_monitor_data(cls) -> list[dict[str, Any]]:
+        raw_monitor_data: str = Command.run("hyprctl", "monitors", "-j").stdout.strip()
+        return json.loads(raw_monitor_data)
+
+    @classmethod
+    def _is_focused(cls, monitor_data: dict[str, Any]) -> bool:
+        return monitor_data.get("focused", False)
 
 
 class OsdDevice(Protocol):
@@ -113,37 +170,99 @@ class Audio(OsdDevice):
         return float(matches.group(1)), matches.group(2) is not None
 
 
-class LaptopScreen(OsdDevice):
+class LaptopDisplay(OsdDevice):
+    def __init__(
+        self, device_name: str = "intel_backlight", min_value: int = 5
+    ) -> None:
+        self._device_name: Final[str] = device_name
+        self._min_value: Final[int] = min_value
+
     def more(self) -> None:
-        pass
+        self._execute_command(("set", "5%+"))
 
     def less(self) -> None:
-        pass
+        self._execute_command(("set", "5%-"))
 
     def toggle(self) -> None:
-        pass
+        max: int = self._max()
+        mid: int = max // 2
+        value: int
+
+        if self._current() >= mid:
+            value = self._min_value
+        else:
+            value = max
+
+        self._execute_command(("set", str(value)))
 
     @property
     def percentage(self) -> int:
-        return 0
+        current: int = self._current()
+        max: int = self._max()
+
+        percentage: float = (current / max) * 100
+
+        return round(percentage)
 
     def get_icon_for(self, action: Action) -> str:
-        return ""
+        match action:
+            case Action.MORE:
+                return "󰃠"
+            case Action.LESS:
+                return "󰃝"
+            case Action.TOGGLE:
+                if self._current() == self._min_value:
+                    return "󰃞"
+
+                return self.get_icon_for(Action.MORE)
+
+    def _current(self) -> int:
+        return int(self._execute_command(("get",)).stdout.strip())
+
+    def _max(self) -> int:
+        return int(self._execute_command(("max",)).stdout.strip())
+
+    def _execute_command(
+        self, cmd_args: tuple[str, ...]
+    ) -> subprocess.CompletedProcess[str]:
+        return Command.run(
+            "brightnessctl",
+            f"--device={self._device_name}",
+            f"--min-value={self._min_value}",
+            "--machine-readable",
+            *cmd_args,
+        )
 
 
-class ExternalMonitor(OsdDevice):
+class ExternalDisplay(OsdDevice):
     # TODO: The performance sucks, fix it.
     _BRIGHTNESS_PATTERN: Final[re.Pattern[str]] = re.compile(
         r"current value\s*=\s*(\d+),\s*max value\s*=\s*(\d+)"
     )
-    _MIN_VALUE: Final[int] = 1
-    _INTERVAL: Final[str] = "10"
+
+    _BRIGHTNESS_CODE: Final[str] = "10"
+
+    def __init__(
+        self,
+        display_id: int,
+        min_value: int = 1,
+        interval: int = 10,
+        sleep_multiplier: float = 0.7,
+    ) -> None:
+        self._id: Final[int] = display_id
+        self._min_value: Final[int] = min_value
+        self._interval: Final[int] = interval
+        self._sleep_multiplier: Final[float] = sleep_multiplier
 
     def more(self) -> None:
-        self._execute_command(("setvcp", "10", "+", self._INTERVAL))
+        self._execute_command(
+            ("setvcp", self._BRIGHTNESS_CODE, "+", str(self._interval))
+        )
 
     def less(self) -> None:
-        self._execute_command(("setvcp", "10", "-", self._INTERVAL))
+        self._execute_command(
+            ("setvcp", self._BRIGHTNESS_CODE, "-", str(self._interval))
+        )
 
     def toggle(self) -> None:
         current: int
@@ -154,11 +273,11 @@ class ExternalMonitor(OsdDevice):
         mid: int = max // 2
 
         if current >= mid:
-            value = self._MIN_VALUE
+            value = self._min_value
         else:
             value = max
 
-        self._execute_command(("setvcp", "10", str(value)))
+        self._execute_command(("setvcp", self._BRIGHTNESS_CODE, str(value)))
 
     @property
     def percentage(self) -> int:
@@ -179,7 +298,7 @@ class ExternalMonitor(OsdDevice):
             case Action.TOGGLE:
                 current: int
                 current, _ = self._get_info()
-                if current == self._MIN_VALUE:
+                if current == self._min_value:
                     return "󰃞"
 
                 return self.get_icon_for(Action.MORE)
@@ -187,10 +306,19 @@ class ExternalMonitor(OsdDevice):
     def _execute_command(
         self, cmd_args: tuple[str, ...]
     ) -> subprocess.CompletedProcess[str]:
-        return Command.run("ddcutil", "--display", "1", *cmd_args)
+        return Command.run(
+            "ddcutil",
+            "--display",
+            str(self._id),
+            "--sleep-multiplier",
+            str(self._sleep_multiplier),
+            *cmd_args,
+        )
 
     def _get_info(self) -> tuple[int, int]:
-        raw_info: str = self._execute_command(("getvcp", "10")).stdout.strip()
+        raw_info: str = self._execute_command(
+            ("getvcp", self._BRIGHTNESS_CODE)
+        ).stdout.strip()
         matches: Optional[re.Match[str]] = self._BRIGHTNESS_PATTERN.search(raw_info)
 
         if not matches:
@@ -201,10 +329,17 @@ class ExternalMonitor(OsdDevice):
         return int(matches.group(1)), int(matches.group(2))
 
 
-_DEVICES: Final[dict[str, OsdDevice]] = {
-    "audio": Audio(),
-    "brightness": ExternalMonitor(),
-}
+def device_factory(device: str) -> OsdDevice:
+    match device:
+        case "audio":
+            return Audio()
+        case "brightness":
+            if FocusedDisplay().is_laptop:
+                return LaptopDisplay()
+
+            return ExternalDisplay(1)
+        case _:
+            raise ValueError()
 
 
 def parse_args() -> tuple[Action, OsdDevice]:
@@ -213,10 +348,10 @@ def parse_args() -> tuple[Action, OsdDevice]:
     )
 
     parser.add_argument("action", choices=tuple(action.value for action in Action))
-    parser.add_argument("device", choices=tuple(_DEVICES.keys()))
+    parser.add_argument("device", choices=("audio", "brightness"))
     args: argparse.Namespace = parser.parse_args()
 
-    return Action(args.action), _DEVICES[args.device]
+    return Action(args.action), device_factory(args.device)
 
 
 def main() -> None:
