@@ -165,8 +165,11 @@ class Audio(OsdDevice):
 
 
 class LaptopDisplay(OsdDevice):
-    _DEVICE_NAME: Final[str] = "intel_backlight"
-    _MIN_VALUE: Final[int] = 5
+    def __init__(
+        self, device_name: str = "intel_backlight", min_value: int = 5
+    ) -> None:
+        self._device_name: Final[str] = device_name
+        self._min_value: Final[int] = min_value
 
     def more(self) -> None:
         self._execute_command(("set", "5%+"))
@@ -180,7 +183,7 @@ class LaptopDisplay(OsdDevice):
         value: int
 
         if self._current() >= mid:
-            value = self._MIN_VALUE
+            value = self._min_value
         else:
             value = max
 
@@ -202,7 +205,7 @@ class LaptopDisplay(OsdDevice):
             case Action.LESS:
                 return "󰃝"
             case Action.TOGGLE:
-                if self._current() == self._MIN_VALUE:
+                if self._current() == self._min_value:
                     return "󰃞"
 
                 return self.get_icon_for(Action.MORE)
@@ -218,8 +221,8 @@ class LaptopDisplay(OsdDevice):
     ) -> subprocess.CompletedProcess[str]:
         return Command.run(
             "brightnessctl",
-            f"--device={self._DEVICE_NAME}",
-            f"--min-value={self._MIN_VALUE}",
+            f"--device={self._device_name}",
+            f"--min-value={self._min_value}",
             "--machine-readable",
             *cmd_args,
         )
@@ -230,14 +233,30 @@ class ExternalDisplay(OsdDevice):
     _BRIGHTNESS_PATTERN: Final[re.Pattern[str]] = re.compile(
         r"current value\s*=\s*(\d+),\s*max value\s*=\s*(\d+)"
     )
-    _MIN_VALUE: Final[int] = 1
-    _INTERVAL: Final[str] = "10"
+
+    _BRIGHTNESS_CODE: Final[str] = "10"
+
+    def __init__(
+        self,
+        display_id: int,
+        min_value: int = 1,
+        interval: int = 10,
+        sleep_multiplier: float = 0.7,
+    ) -> None:
+        self._id: Final[int] = display_id
+        self._min_value: Final[int] = min_value
+        self._interval: Final[int] = interval
+        self._sleep_multiplier: Final[float] = sleep_multiplier
 
     def more(self) -> None:
-        self._execute_command(("setvcp", "10", "+", self._INTERVAL))
+        self._execute_command(
+            ("setvcp", self._BRIGHTNESS_CODE, "+", str(self._interval))
+        )
 
     def less(self) -> None:
-        self._execute_command(("setvcp", "10", "-", self._INTERVAL))
+        self._execute_command(
+            ("setvcp", self._BRIGHTNESS_CODE, "-", str(self._interval))
+        )
 
     def toggle(self) -> None:
         current: int
@@ -248,11 +267,11 @@ class ExternalDisplay(OsdDevice):
         mid: int = max // 2
 
         if current >= mid:
-            value = self._MIN_VALUE
+            value = self._min_value
         else:
             value = max
 
-        self._execute_command(("setvcp", "10", str(value)))
+        self._execute_command(("setvcp", self._BRIGHTNESS_CODE, str(value)))
 
     @property
     def percentage(self) -> int:
@@ -273,7 +292,7 @@ class ExternalDisplay(OsdDevice):
             case Action.TOGGLE:
                 current: int
                 current, _ = self._get_info()
-                if current == self._MIN_VALUE:
+                if current == self._min_value:
                     return "󰃞"
 
                 return self.get_icon_for(Action.MORE)
@@ -281,10 +300,19 @@ class ExternalDisplay(OsdDevice):
     def _execute_command(
         self, cmd_args: tuple[str, ...]
     ) -> subprocess.CompletedProcess[str]:
-        return Command.run("ddcutil", "--display", "1", *cmd_args)
+        return Command.run(
+            "ddcutil",
+            "--display",
+            str(self._id),
+            "--sleep-multiplier",
+            str(self._sleep_multiplier),
+            *cmd_args,
+        )
 
     def _get_info(self) -> tuple[int, int]:
-        raw_info: str = self._execute_command(("getvcp", "10")).stdout.strip()
+        raw_info: str = self._execute_command(
+            ("getvcp", self._BRIGHTNESS_CODE)
+        ).stdout.strip()
         matches: Optional[re.Match[str]] = self._BRIGHTNESS_PATTERN.search(raw_info)
 
         if not matches:
@@ -295,12 +323,6 @@ class ExternalDisplay(OsdDevice):
         return int(matches.group(1)), int(matches.group(2))
 
 
-_DEVICES: Final[dict[str, OsdDevice]] = {
-    "audio": Audio(),
-    "brightness": ExternalDisplay(),
-}
-
-
 def device_factory(device: str) -> OsdDevice:
     match device:
         case "audio":
@@ -308,7 +330,8 @@ def device_factory(device: str) -> OsdDevice:
         case "brightness":
             if FocusedDisplay().is_laptop:
                 return LaptopDisplay()
-            return ExternalDisplay()
+
+            return ExternalDisplay(1)
         case _:
             raise ValueError()
 
@@ -319,7 +342,7 @@ def parse_args() -> tuple[Action, OsdDevice]:
     )
 
     parser.add_argument("action", choices=tuple(action.value for action in Action))
-    parser.add_argument("device", choices=tuple(_DEVICES.keys()))
+    parser.add_argument("device", choices=("audio", "brightness"))
     args: argparse.Namespace = parser.parse_args()
 
     return Action(args.action), device_factory(args.device)
