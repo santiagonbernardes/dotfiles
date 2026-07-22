@@ -1,0 +1,3 @@
+{{- if findExecutable "rustup" (list "/usr/bin") -}}
+  {{- output "rustup" "completions" "bash" "cargo" -}}
+{{- end -}}
