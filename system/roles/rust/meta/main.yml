@@ -2,8 +2,7 @@
 galaxy_info:
   license: MIT
   author: Santiago Bernardes
-  description: Installs base packages for command line usage
+  description: Sets up rust
   min_ansible_version: "2.2"
 
-dependencies:
-  - role: rust
+dependencies: []

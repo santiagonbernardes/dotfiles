@@ -4,7 +4,7 @@ mise_packages:
   ## Ruby
   # https://github.com/rbenv/ruby-build/wiki#suggested-build-environment
   - base-devel
-  - rust
+  - rustup
   - libffi
   - libyaml
   - openssl
