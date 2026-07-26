@@ -8,6 +8,8 @@ rust_components:
   - rust-analyzer
   - clippy
   - rustfmt
+  - rust-docs
+  - rust-src
 
 rust_uninstall_packages:
   - rust # prevent conflict with rustup
