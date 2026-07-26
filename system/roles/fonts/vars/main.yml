@@ -10,3 +10,16 @@ fonts_extensions:
   - otf
   - ttf
   - woff2
+
+fonts_symlinks_src: /usr/share/fontconfig/conf.avail
+fonts_symlinks_dest: /etc/fonts/conf.d
+fonts_links_files:
+  - 50-user.conf
+  - 10-sub-pixel-rgb.conf
+  - 10-hinting-slight.conf
+  - 11-lcdfilter-default.conf
+  - 10-nerd-font-symbols.conf
+  - 10-yes-antialias.conf
+  - 45-generic.conf
+  - 49-sansserif.conf
+  - 51-local.conf

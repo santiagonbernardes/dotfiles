@@ -5,3 +5,12 @@
   loop: "{{ fonts_all if (fonts_selected | length == 0) else fonts_selected }}"
   loop_control:
     loop_var: font_category
+
+- name: Ensure symlinks
+  ansible.builtin.file:
+    src: "{{ fonts_symlinks_src }}/{{ item }}"
+    dest: "{{ fonts_symlinks_dest }}/{{ item }}"
+    state: link
+  loop: "{{ fonts_links_files }}"
+  become: true
+  notify: refresh fonts cache
