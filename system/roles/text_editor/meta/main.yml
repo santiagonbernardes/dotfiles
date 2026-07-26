@@ -5,5 +5,8 @@ galaxy_info:
   description: Sets up text editors
   min_ansible_version: "2.2"
 
-dependencies: []
-# TODO: If there is a desktop env involved, depend on terminal_emulators
+dependencies:
+  - role: mise
+  - role: fonts
+    fonts_selected:
+      - monospace

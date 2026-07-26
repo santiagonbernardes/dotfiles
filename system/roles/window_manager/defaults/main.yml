@@ -12,7 +12,3 @@ window_manager_packages:
   - hyprpolkitagent
   - qt5-wayland
   - qt6-wayland
-  - ttf-jetbrains-mono-nerd
-  - noto-fonts
-  - noto-fonts-emoji
-  - noto-fonts-cjk

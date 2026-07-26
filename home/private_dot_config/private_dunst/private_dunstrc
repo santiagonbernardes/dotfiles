@@ -1,6 +1,6 @@
 [global]
   origin = top-center
-  font = "{{ .font }} 11"
+  font = monospace 11
   frame_color = "#282a36"
   force_xwayland = true
 

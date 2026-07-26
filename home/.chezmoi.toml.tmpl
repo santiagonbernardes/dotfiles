@@ -9,7 +9,8 @@ sourceDir = {{ .chezmoi.config.sourceDir | quote }}
 {{- range $field := $fields }}
   {{ $field.name }} = {{ $field.value | quote }}
 {{- end }}
-  font = "JetBrainsMono Nerd Font"
+  # Ghostty doesn't take monospace as its font family. Congrats!
+  ghostty_font = "JetBrainsMono Nerd Font"
   tmux_tpm_path_rel_to_home = ".local/share/.tmux/plugins/tpm"
 
 [merge]

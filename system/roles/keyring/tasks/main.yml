@@ -1,10 +1,4 @@
 ---
-- name: Install drivers
-  ansible.builtin.package:
-    name: "{{ audio_packages }}"
-    state: present
-  become: true
-
 - name: Ensures keyrings directory exists
   ansible.builtin.file:
     path: "{{ keyring_dir }}"

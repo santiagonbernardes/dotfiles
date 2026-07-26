@@ -1,5 +1,5 @@
 ---
-- name: Install drivers
+- name: Install audio packages
   ansible.builtin.package:
     name: "{{ audio_packages }}"
     state: present

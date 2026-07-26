@@ -17,4 +17,3 @@ file_manager_packages:
   - udisks2 # mount plugin dependency
   - wl-clipboard
   - github-cli
-  - ttf-jetbrains-mono-nerd

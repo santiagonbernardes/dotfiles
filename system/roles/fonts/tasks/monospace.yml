@@ -1,0 +1,7 @@
+---
+- name: Install monospace fonts
+  ansible.builtin.package:
+    name: "{{ fonts_monospace_packages + fonts_glyphs }}"
+    state: present
+  notify: refresh fonts cache
+  become: true
