@@ -1,0 +1,57 @@
+---
+font_config:
+  - family: sans
+    fonts:
+      - Inter Variable
+      - Noto Sans
+    replaces:
+      - sans-serif
+      - ui-sans-serif
+      - system-ui
+  - family: serif
+    fonts:
+      - Source Serif 4 Variable
+      - Noto Serif
+    replaces:
+      - ui-serif
+  - family: monospace
+    fonts:
+      - JetBrainsMono Nerd Font
+      - NotoMono Nerd Font Mono
+      - Symbols Nerd Font Mono
+    replaces:
+      - mono
+      - ui-monospace
+  - family: fantasy
+    fonts:
+      - Space Grotesk
+    replaces:
+      - display
+  - family: emoji
+    fonts:
+      - Noto Color Emoji
+    replaces: []
+  - family: math
+    fonts:
+      - Noto Sans Math
+    replaces: []
+fallbacks:
+  - Noto Color Emoji
+  - Symbols Nerd Font
+  - NotoMono Nerd Font Propo
+  - Font Awesome 7 Free
+  - Font Awesome 7 Brands
+  - JetBrainsMonoNL Nerd Font Propo
+  - Noto Sans
+  # CJK
+  - Noto Sans CJK SC
+  - Noto Sans CJK TC
+  - Noto Sans CJK JP
+  - Noto Sans CJK KR
+  - Noto Sans CJK HK
+  # Emoji
+  - Noto Color Emoji
+  # Music
+  - Noto Music
+  # Math (if you install noto-fonts-extra)
+  - Noto Sans Math

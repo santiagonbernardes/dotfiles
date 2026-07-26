@@ -1,0 +1,37 @@
+{{- $fallbacks := .fallbacks -}}
+{{- $config := .font_config -}}
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+<fontconfig>
+  {{- range $_, $data := $config }}
+  <alias>
+    <family>{{ $data.family }}</family>
+    <prefer>
+    {{- range $_, $preferred := (uniq (concat $data.fonts $fallbacks)) }}
+      <family>{{ $preferred }}</family>
+    {{- end }}
+    </prefer>
+  </alias>
+  {{- end }}
+
+  {{- range $_, $data := $config }}
+    {{- range $_, $replace_from := $data.replaces }}
+  <match target="pattern">
+    <test qual="any" name="family">
+      <string>{{ $replace_from }}</string>
+    </test>
+    <edit name="family" mode="assign">
+      <string>{{ $data.family }}</string>
+    </edit>
+  </match>
+    {{- end }}
+  {{- end }}
+
+  <match target="font">
+    <edit name="antialias" mode="assign"><bool>true</bool></edit>
+    <edit name="hinting" mode="assign"><bool>true</bool></edit>
+    <edit name="hintstyle" mode="assign"><const>hintslight</const></edit>
+    <edit name="rgba" mode="assign"><const>rgb</const></edit>
+    <edit name="lcdfilter" mode="assign"><const>lcddefault</const></edit>
+  </match>
+</fontconfig>
