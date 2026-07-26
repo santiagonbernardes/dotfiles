@@ -2,7 +2,7 @@
 fonts_all:
   - monospace
   - sans
-  - seriff
+  - serif
   - fantasy
   - vconsole
 fonts_path: /usr/local/share/fonts

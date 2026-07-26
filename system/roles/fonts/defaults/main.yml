@@ -9,7 +9,7 @@ fonts_monospace_packages:
 fonts_sans_packages:
   - inter-font
 
-fonts_seriff_packages:
+fonts_serif_packages:
   - adobe-source-serif-fonts
 
 fonts_vconsole_packages:
