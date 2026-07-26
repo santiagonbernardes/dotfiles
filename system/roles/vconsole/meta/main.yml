@@ -5,4 +5,7 @@ galaxy_info:
   description: Sets up virtual console
   min_ansible_version: "2.2"
 
-dependencies: []
+dependencies:
+  - role: fonts
+    fonts_selected:
+      - vconsole

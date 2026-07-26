@@ -7,3 +7,6 @@ galaxy_info:
 
 dependencies:
   - role: base
+  - role: fonts
+    fonts_selected:
+      - monospace

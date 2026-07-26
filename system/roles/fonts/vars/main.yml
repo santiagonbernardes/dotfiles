@@ -1,0 +1,12 @@
+---
+fonts_all:
+  - monospace
+  - sans
+  - seriff
+  - fantasy
+  - vconsole
+fonts_path: /usr/local/share/fonts
+fonts_extensions:
+  - otf
+  - ttf
+  - woff2

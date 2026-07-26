@@ -1,0 +1,7 @@
+---
+- name: Install seriff fonts
+  ansible.builtin.package:
+    name: "{{ fonts_seriff_packages + fonts_glyphs }}"
+    state: present
+  notify: refresh fonts cache
+  become: true

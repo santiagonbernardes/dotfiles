@@ -1,0 +1,31 @@
+---
+# Empty list installs every fonts
+# Check vars.fonts_all to see check valid values.
+fonts_selected: []
+
+fonts_monospace_packages:
+  - ttf-jetbrains-mono-nerd
+
+fonts_sans_packages:
+  - inter-font
+
+fonts_seriff_packages:
+  - adobe-source-serif-fonts
+
+fonts_vconsole_packages:
+  - terminus-font
+
+fonts_glyphs:
+  - otf-font-awesome
+  - ttf-noto-nerd
+  - noto-fonts-emoji
+  - noto-fonts-cjk
+  - noto-fonts-extra
+  - ttf-nerd-fonts-symbols
+  - ttf-nerd-fonts-symbols-common
+  - ttf-nerd-fonts-symbols-mono
+
+
+fonts_fantasy_folder: SpaceGrotesk-2.0.0
+fonts_fantasy_url: "https://github.com/floriankarsten/space-grotesk/releases/download/2.0.0/SpaceGrotesk-2.0.0.zip"
+fonts_fantasy_checksum: sha256:53b415577d4139248555300710bea0d268c7a5be67b93de53b716a9736cabffd

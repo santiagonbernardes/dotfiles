@@ -1,0 +1,78 @@
+---
+- name: Check if Space Grotesk is installed
+  ansible.builtin.command: fc-list
+  register: fonts_fc_list_output
+  changed_when: false
+  failed_when: false
+
+- name: Installs Space Grotesk
+  when: "'Space Grotesk' not in fonts_fc_list_output.stdout"
+  notify: refresh fonts cache
+  block:
+    - name: Creates temporary directory
+      ansible.builtin.tempfile:
+        state: directory
+      register: fonts_temp_file
+
+    - name: Download Space Grotesk
+      ansible.builtin.get_url:
+        url: "{{ fonts_fantasy_url }}"
+        dest: "{{ fonts_temp_file.path }}/font.zip"
+        checksum: "{{ fonts_fantasy_checksum }}"
+        mode: "0644"
+
+    - name: Extract font files
+      ansible.builtin.unarchive:
+        src: "{{ fonts_temp_file.path }}/font.zip"
+        dest: "{{ fonts_temp_file.path }}"
+
+    - name: Set extracted files path
+      ansible.builtin.set_fact:
+        fonts_extracted_path: "{{ fonts_temp_file.path }}/{{ fonts_fantasy_folder }}"
+
+    - name: Ensure font directories exists
+      ansible.builtin.file:
+        path: "{{ fonts_path }}/{{ item }}"
+        state: directory
+        mode: "0555"
+        owner: root
+        group: root
+      become: true
+      loop: "{{ fonts_extensions }}"
+
+    - name: Find all files with a specific extension
+      ansible.builtin.find:
+        paths: "{{ fonts_extracted_path }}"
+        patterns: "*.{{ item }}"
+        recurse: true
+      register: fonts_files_found
+      loop: "{{ fonts_extensions }}"
+
+    - name: Build flat category/path list
+      ansible.builtin.set_fact:
+        fonts_to_copy: >-
+          {{
+            fonts_to_copy | default([])
+            + [{'extension': item.0.item, 'path': item.1.path}]
+          }}
+      loop: >-
+        {{
+          fonts_files_found.results
+          | selectattr('files', 'defined')
+          | subelements('files')
+        }}
+
+    - name: Copies files to their location
+      ansible.builtin.copy:
+        src: "{{ item.path }}"
+        dest: "{{ fonts_path }}/{{ item.extension }}"
+        mode: "0644"
+        owner: root
+        group: root
+      become: true
+      loop: "{{ fonts_to_copy }}"
+
+    - name: Remove temporary directory
+      ansible.builtin.file:
+        path: "{{ fonts_temp_file.path }}"
+        state: absent

@@ -1,0 +1,7 @@
+---
+- name: Triggers font installation
+  ansible.builtin.include_tasks:
+    file: "{{ font_category }}.yml"
+  loop: "{{ fonts_all if (fonts_selected | length == 0) else fonts_selected }}"
+  loop_control:
+    loop_var: font_category
