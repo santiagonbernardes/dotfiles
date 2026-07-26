@@ -1,0 +1,15 @@
+---
+rust_packages:
+  - rustup
+
+rust_default_toolchain: stable
+
+rust_components:
+  - rust-analyzer
+  - clippy
+  - rustfmt
+  - rust-docs
+  - rust-src
+
+rust_uninstall_packages:
+  - rust # prevent conflict with rustup

@@ -6,7 +6,6 @@
 {{- $input := fromJson $raw -}}
 {{- $extras := list
       "lazyvim.plugins.extras.coding.mini-surround"
-      "lazyvim.plugins.extras.lang.angular"
       "lazyvim.plugins.extras.lang.ansible"
       "lazyvim.plugins.extras.lang.docker"
       "lazyvim.plugins.extras.lang.git"
@@ -21,6 +20,7 @@
       "lazyvim.plugins.extras.lang.yaml"
       "lazyvim.plugins.extras.util.chezmoi"
       "lazyvim.plugins.extras.util.gh"
+      "lazyvim.plugins.extras.lang.rust"
 -}}
 {{- $output := $input | setValueAtPath "extras" $extras -}}
 {{- $output | toPrettyJson -}}

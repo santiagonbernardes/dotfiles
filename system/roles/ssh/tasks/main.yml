@@ -13,8 +13,9 @@
   become: false
 
 - name: Ensure known_hosts file
-  ansible.builtin.file:
-    path: "{{ ssh_known_hosts_path }}"
-    state: touch
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ ssh_known_hosts_path }}"
     mode: "0600"
+    force: false
   become: false

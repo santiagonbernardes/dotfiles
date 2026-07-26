@@ -3,3 +3,4 @@
 -- Add any additional options here
 vim.opt.relativenumber = true
 vim.opt.wrap = true
+vim.g.lazyvim_rust_diagnostics = "rust-analyzer"

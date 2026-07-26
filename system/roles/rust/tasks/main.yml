@@ -1,0 +1,58 @@
+---
+- name: Uninstall conflicting packagesf
+  ansible.builtin.package:
+    name: "{{ rust_uninstall_packages }}"
+    state: absent
+  become: true
+
+- name: Install Rust packages
+  ansible.builtin.package:
+    name: "{{ rust_packages }}"
+    state: present
+  become: true
+
+- name: Check rustup version
+  ansible.builtin.command:
+    cmd: rustup --version
+  register: rust_rustup_version
+  changed_when: false
+
+- name: Configure rustup
+  when: rust_rustup_version.rc == 0
+  block:
+    - name: Get installed toolchains
+      ansible.builtin.command:
+        cmd: rustup toolchain list
+      register: rust_toolchains
+      changed_when: false
+
+    - name: Install default toolchain
+      ansible.builtin.command:
+        cmd: rustup toolchain install {{ rust_default_toolchain }}
+      when: rust_default_toolchain not in rust_toolchains.stdout
+      changed_when: false
+
+    - name: Get current default toolchain
+      ansible.builtin.command:
+        cmd: rustup default
+      register: rust_default
+      changed_when: false
+
+    - name: Set default toolchain
+      ansible.builtin.command:
+        cmd: rustup default {{ rust_default_toolchain }}
+      when: rust_default_toolchain not in rust_default.stdout
+      changed_when: false
+
+    - name: Get installed components
+      ansible.builtin.command:
+        cmd: rustup component list --installed
+      register: rust_components_installed
+      changed_when: false
+
+    - name: Install requested components
+      ansible.builtin.command:
+        cmd: rustup component add {{ item }}
+      loop: "{{ rust_components }}"
+      when: item not in rust_components_installed.stdout
+      changed_when: false
