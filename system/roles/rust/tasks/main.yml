@@ -1,3 +1,10 @@
+---
+- name: Uninstall conflicting packagesf
+  ansible.builtin.package:
+    name: "{{ rust_uninstall_packages }}"
+    state: absent
+  become: true
+
 - name: Install Rust packages
   ansible.builtin.package:
     name: "{{ rust_packages }}"
