@@ -25,3 +25,14 @@
   when:
     - desktop_current_browser_output.stdout | trim != desktop_default_browser_entry
   changed_when: desktop_current_browser_output.rc != 0
+
+- name: Check if Space Grotesk is installed
+  ansible.builtin.command: fc-list
+  register: desktop_fc_list_output
+  changed_when: false
+  failed_when: false
+
+- name: Installs Space Grotesk
+  when: "'Space Grotesk' not in desktop_fc_list_output.stdout"
+  ansible.builtin.include_tasks:
+    file: space_grotesk.yml

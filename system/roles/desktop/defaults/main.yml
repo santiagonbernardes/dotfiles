@@ -20,6 +20,9 @@ desktop_packages:
   - rofi
   - mpv
   - virt-manager
+  - ttf-jetbrains-mono-nerd
+  - inter-font
+  - adobe-source-serif-fonts
 
 desktop_user_services:
   - hyprpaper
@@ -29,3 +32,16 @@ desktop_system_services:
   - power-profiles-daemon
 
 desktop_default_browser_entry: firefox.desktop
+
+desktop_space_grotesk_url: https://github.com/floriankarsten/space-grotesk/releases/download/2.0.0/SpaceGrotesk-2.0.0.zip
+
+desktop_space_grotesk_checksum: sha256:53b415577d4139248555300710bea0d268c7a5be67b93de53b716a9736cabffd
+
+desktop_space_grotesk_extracted_folder: SpaceGrotesk-2.0.0
+
+desktop_font_path: /usr/local/share/fonts
+
+desktop_font_extensions:
+  - otf
+  - ttf
+  - woff2
