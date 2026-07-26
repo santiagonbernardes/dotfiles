@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# fonts fonts.conf hash:
+# {{ include (joinPath "private_dot_config" "private_fontconfig" "private_fonts.conf") | sha256sum }}
+
+fc-cache -f
