@@ -1,0 +1,8 @@
+{
+  "plugins": {
+    "starry.nvim": {
+      "rev": "67031d569823d99bfefc424170b746611a499be5",
+      "src": "https://github.com/ray-x/starry.nvim"
+    }
+  }
+}

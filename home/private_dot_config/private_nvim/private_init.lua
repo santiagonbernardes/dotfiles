@@ -29,6 +29,20 @@ vim.opt.scrolloff      = 24            -- Number of lines around the cursor
 vim.opt.colorcolumn    = "80"          -- Show column at the 80th char
 vim.opt.spelllang      = "en,pt"       -- Languages to use in spell checking
 
+-- # Plugins
+vim.pack.add({
+  -- ## Colorscheme
+  { src = "https://github.com/ray-x/starry.nvim" },
+})
+
+-- ## Plugin configuration
+-- ### Colorscheme
+require('starry').setup({
+  disable = {
+    background = true, -- transparent background
+  },
+})
+vim.cmd("colorscheme habamax")
 
 -- Keymaps
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = "Remove search highlight" })
