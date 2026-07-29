@@ -88,6 +88,11 @@ vim.pack.add({
   { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
   -- Plugin
   { src = 'https://github.com/akinsho/bufferline.nvim' },
+  -- Dashboard
+  -- Dependencies
+  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+  -- Plugin
+  { src = 'https://github.com/nvimdev/dashboard-nvim' },
 })
 
 -- ## Plugin configuration
@@ -282,6 +287,12 @@ vim.api.nvim_create_autocmd('PackChanged', {
 
     if name == blink then require('blink.cmp').build():pwait() end
   end,
+})
+
+local group_dashboard = vim.api.nvim_create_augroup('dashgoard-config', {})
+vim.api.nvim_create_autocmd('VimEnter', {
+  group = group_dashboard,
+  callback = function(_) require('dashboard').setup({}) end,
 })
 
 -- # Diagnostics
