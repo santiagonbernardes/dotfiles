@@ -49,6 +49,17 @@ vim.pack.add({
   { src = 'https://github.com/saghen/blink.lib' },
   -- Plugin
   { src = 'https://github.com/saghen/blink.cmp' },
+  -- File explorer
+  -- Dependencies
+  { src = "https://github.com/nvim-lua/plenary.nvim" },
+  { src = "https://github.com/MunifTanjim/nui.nvim" },
+  -- optional, but recommended
+  { src = "https://github.com/nvim-tree/nvim-web-devicons" },
+  -- Plugin
+  {
+    src = 'https://github.com/nvim-neo-tree/neo-tree.nvim',
+    version = vim.version.range('3')
+  },
 })
 
 -- ## Plugin configuration
@@ -78,6 +89,20 @@ local cmp = require('blink.cmp')
 -- autocommand?
 cmp.build():pwait()
 cmp.setup()
+
+-- ### File explorer
+---@type neotree.Config.Base
+require('neo-tree').setup({
+  window = {
+    mappings = {
+      ['<space>'] = 'noop',
+      ['l'] = { 'open' },
+      ['h'] = { 'close_node' },
+      ['<right>'] = { 'open' },
+      ['<left>'] = { 'close_node' },
+    }
+  }
+})
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
@@ -175,6 +200,15 @@ vim.diagnostic.config({
       }
     end,
   },
+
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = '',
+      [vim.diagnostic.severity.WARN] = '',
+      [vim.diagnostic.severity.INFO] = '',
+      [vim.diagnostic.severity.HINT] = '󰌵',
+    },
+  }
 })
 
 -- # Keymaps
@@ -190,3 +224,8 @@ vim.keymap.set("n", "<C-d>", "<C-d>zz")
 vim.keymap.set("n", "<C-u>", "<C-u>zz")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
+vim.keymap.set('n', '<leader>e', function ()
+  require('neo-tree.command').execute({ toggle = true })
+end, { desc = 'Open File [E]xplorer' })
+
+
