@@ -110,6 +110,8 @@ vim.pack.add({
   { src = 'https://github.com/windwp/nvim-autopairs' },
   -- Jump out of objects
   { src = 'https://github.com/abecodes/tabout.nvim' },
+  -- Visual indentation
+  { src = 'https://github.com/lukas-reineke/indent-blankline.nvim' },
 })
 
 -- ## Plugin configuration
@@ -327,6 +329,9 @@ require('nvim-autopairs').setup()
 
 -- Tabout
 require('tabout').setup({})
+
+-- Visual indentation
+require('ibl').setup()
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
