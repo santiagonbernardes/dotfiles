@@ -62,6 +62,14 @@ vim.pack.add({
   },
   -- Tmux
   { src = 'https://github.com/christoomey/vim-tmux-navigator' },
+  -- Picker/fuzzy-finder
+  -- Dependencies
+  { src = 'https://github.com/nvim-telescope/telescope-fzf-native.nvim' },
+  { src = 'https://github.com/nvim-telescope/telescope-fzf-native.nvim' },
+  -- optional
+  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+  -- Plugin
+  { src = 'https://github.com/nvim-telescope/telescope.nvim' },
 })
 
 -- ## Plugin configuration
@@ -86,11 +94,7 @@ require("mason-lspconfig").setup({
 })
 
 -- ### Completion
-local cmp = require('blink.cmp')
--- TODO: Do I have to rebuild it every time or can it be a PackChanged
--- autocommand?
-cmp.build():pwait()
-cmp.setup()
+require('blink.cmp').setup()
 
 -- ### File explorer
 ---@type neotree.Config.Base
@@ -122,6 +126,21 @@ local function treesitter_try_attach(buf, lang)
   if has_indent_query then
     vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
   end
+end
+
+local function build(what_to_build, build_cmd, cwd)
+  local result = vim.system(build_cmd, { cwd = cwd })
+  if result.code == 0 then return end
+
+  local stderr = result.stderr or ''
+  local stdout = result.stdout or ''
+  local output = stderr ~= '' and stderr or stdout
+  if output == '' then output = 'No output from build command.' end
+  vim.notify(
+    ('Build failed for %s:\n%s'):format(
+      what_to_build, output
+    ), vim.log.levels.ERROR
+  )
 end
 
 -- # Autocommands
@@ -181,6 +200,34 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+vim.api.nvim_create_autocmd('PackChanged', {
+  callback = function(event)
+    local name = event.data.spec.name
+    local kind = event.data.kind
+    if kind ~= 'install' and kind ~= 'update' then return end
+
+    local tl_fzf_native = 'telescope-fzf-native.nvim'
+    local ts = 'nvim-treesitter'
+    local blink = 'blink.cmp'
+
+    if name == tl_fzf_native and vim.fn.executable 'make' == 1 then
+      build(tl_fzf_native, { 'make' }, event.data.path)
+      return
+    end
+    if name ==  ts then
+      if not event.data.active then
+          vim.cmd.packadd 'nvim-treesitter'
+      end
+      vim.cmd 'TSUpdate'
+      return
+    end
+
+    if name == blink then
+      require('blink.cmp').build():pwait()
+    end
+  end,
+  })
+
 -- # Diagnostics
 vim.diagnostic.config({
   update_in_insert = false,
@@ -235,3 +282,9 @@ vim.keymap.set('n', "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>", { desc = 'Move to t
 vim.keymap.set('n', "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>", { desc = 'Move to the right pane/window' })
 vim.keymap.set('n', "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>", { desc = 'Move to the previous pane/window' })
 
+-- Picker/fuzzy-finder
+local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = '[F]ind [F]iles' })
+vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = '[F]ind with [G]rep' })
+vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = '[F]ind in [B]uffers' })
+vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = '[F]ind in [Help]' })
