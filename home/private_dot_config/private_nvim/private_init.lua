@@ -106,6 +106,8 @@ vim.pack.add({
   { src = 'https://github.com/nvim-mini/mini.icons' },
   -- Plugin
   { src = 'https://github.com/folke/which-key.nvim' },
+  -- Close brackets, quotes, etc
+  { src = 'https://github.com/windwp/nvim-autopairs' },
 })
 
 -- ## Plugin configuration
@@ -317,6 +319,9 @@ require('conform').setup({
 require('which-key').setup({
   preset = 'helix',
 })
+
+-- Close brackets, quotes, etc
+require('nvim-autopairs').setup({})
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
