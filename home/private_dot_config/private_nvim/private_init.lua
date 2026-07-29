@@ -108,6 +108,8 @@ vim.pack.add({
   { src = 'https://github.com/folke/which-key.nvim' },
   -- Close brackets, quotes, etc
   { src = 'https://github.com/windwp/nvim-autopairs' },
+  -- Jump out of objects
+  { src = 'https://github.com/abecodes/tabout.nvim' },
 })
 
 -- ## Plugin configuration
@@ -321,7 +323,10 @@ require('which-key').setup({
 })
 
 -- Close brackets, quotes, etc
-require('nvim-autopairs').setup({})
+require('nvim-autopairs').setup()
+
+-- Tabout
+require('tabout').setup({})
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
@@ -585,7 +590,7 @@ vim.keymap.set(
   'n',
   '<leader>fh',
   builtin.help_tags,
-  { desc = '[F]ind in [Help]' }
+  { desc = '[F]ind in [H]elp]' }
 )
 vim.keymap.set(
   'n',
