@@ -60,6 +60,8 @@ vim.pack.add({
     src = 'https://github.com/nvim-neo-tree/neo-tree.nvim',
     version = vim.version.range('3')
   },
+  -- Tmux
+  { src = 'https://github.com/christoomey/vim-tmux-navigator' },
 })
 
 -- ## Plugin configuration
@@ -227,5 +229,9 @@ vim.keymap.set("n", "N", "Nzzzv")
 vim.keymap.set('n', '<leader>e', function ()
   require('neo-tree.command').execute({ toggle = true })
 end, { desc = 'Open File [E]xplorer' })
-
+vim.keymap.set('n', "<c-h>", "<cmd><C-U>TmuxNavigateLeft<cr>", { desc = 'Move to the left pane/window' })
+vim.keymap.set('n', "<c-j>", "<cmd><C-U>TmuxNavigateDown<cr>", { desc = 'Move to the pane/window below' })
+vim.keymap.set('n', "<c-k>", "<cmd><C-U>TmuxNavigateUp<cr>", { desc = 'Move to the pane/window above' })
+vim.keymap.set('n', "<c-l>", "<cmd><C-U>TmuxNavigateRight<cr>", { desc = 'Move to the right pane/window' })
+vim.keymap.set('n', "<c-\\>", "<cmd><C-U>TmuxNavigatePrevious<cr>", { desc = 'Move to the previous pane/window' })
 
