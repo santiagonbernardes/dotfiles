@@ -44,6 +44,11 @@ vim.pack.add({
   { src = 'https://github.com/mason-org/mason-lspconfig.nvim' },
   -- Anoying config file diagnostics
   { src = 'https://github.com/folke/lazydev.nvim' },
+  -- Completion
+  -- Dependency
+  { src = 'https://github.com/saghen/blink.lib' },
+  -- Plugin
+  { src = 'https://github.com/saghen/blink.cmp' },
 })
 
 -- ## Plugin configuration
@@ -56,7 +61,7 @@ require('starry').setup({
 
 vim.cmd("colorscheme dracula")
 
--- ## Treesitter
+-- ### Treesitter
 local parsers = {
   'bash', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'rust', 'python',
   'query', 'vim', 'vimdoc', 'ruby',
@@ -66,6 +71,13 @@ require("mason").setup()
 require("mason-lspconfig").setup({
   ensure_installed = { "lua_ls", },
 })
+
+-- ### Completion
+local cmp = require('blink.cmp')
+-- TODO: Do I have to rebuild it every time or can it be a PackChanged
+-- autocommand?
+cmp.build():pwait()
+cmp.setup()
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
