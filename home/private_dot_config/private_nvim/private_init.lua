@@ -78,6 +78,11 @@ vim.pack.add({
   { src = 'https://github.com/mason-org/mason.nvim' },
   -- Plugin
   { src = 'https://github.com/stevearc/conform.nvim' },
+  -- Statusline
+  -- Dependencies
+  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+  -- Plugin
+  { src = 'https://github.com/nvim-lualine/lualine.nvim' },
 })
 
 -- ## Plugin configuration
@@ -106,10 +111,18 @@ local parsers = {
   'ruby',
 }
 
+-- Formatters
 -- TODO: Will install adhoc, this needs to be automated
 -- local _formatters = {
 --   'stylua',
 -- }
+
+-- Statusline
+require('lualine').setup({
+  options = {
+    theme = 'dracula',
+  },
+})
 
 require('nvim-treesitter').install(parsers)
 require('mason').setup()
