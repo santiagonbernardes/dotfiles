@@ -83,6 +83,11 @@ vim.pack.add({
   { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
   -- Plugin
   { src = 'https://github.com/nvim-lualine/lualine.nvim' },
+  -- Tabs
+  -- Dependencies
+  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+  -- Plugin
+  { src = 'https://github.com/akinsho/bufferline.nvim' },
 })
 
 -- ## Plugin configuration
@@ -123,6 +128,9 @@ require('lualine').setup({
     theme = 'dracula',
   },
 })
+
+-- Tabs
+require('bufferline').setup()
 
 require('nvim-treesitter').install(parsers)
 require('mason').setup()
