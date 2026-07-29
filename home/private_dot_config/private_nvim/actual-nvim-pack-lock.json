@@ -1,5 +1,9 @@
 {
   "plugins": {
+    "nvim-treesitter": {
+      "rev": "61df84986b4b4ec469ee745a182e433d49f8c27e",
+      "src": "https://github.com/nvim-treesitter/nvim-treesitter"
+    },
     "starry.nvim": {
       "rev": "67031d569823d99bfefc424170b746611a499be5",
       "src": "https://github.com/ray-x/starry.nvim"
