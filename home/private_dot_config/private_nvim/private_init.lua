@@ -9,6 +9,7 @@ vim.opt.number = true -- Show line number
 vim.opt.relativenumber = true -- Show relative number
 vim.opt.undofile = true -- Persistent undo
 vim.opt.autoindent = true -- Use auto indent
+vim.opt.breakindent = true -- Indent wrapped lines to match line start
 vim.opt.expandtab = true -- Convert tabs to spaces
 vim.opt.ignorecase = true -- Ignore case during search
 vim.opt.incsearch = true -- Show search matches while typing
@@ -28,6 +29,9 @@ vim.opt.incsearch = true -- Incremental search
 vim.opt.scrolloff = 24 -- Number of lines around the cursor
 vim.opt.colorcolumn = '80' -- Show column at the 80th char
 vim.opt.spelllang = 'en,pt' -- Languages to use in spell checking
+vim.opt.signcolumn = 'yes:1' -- Always show the sign column with 1 space
+vim.opt.ruler = false -- Don't show cursor coordinates
+vim.opt.fillchars = 'eob: ,fold:╌' -- Replace symbols on fold and end of buffer
 
 -- # Plugins
 vim.pack.add({
@@ -331,7 +335,13 @@ require('nvim-autopairs').setup()
 require('tabout').setup({})
 
 -- Visual indentation
-require('ibl').setup()
+require('ibl').setup({
+  exclude = {
+    filetypes = {
+      'dashboard',
+    },
+  },
+})
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
@@ -603,4 +613,4 @@ vim.keymap.set(
   '<cmd>LazyGit<cr>',
   { desc = 'Open Lazy[G]it' }
 )
-vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd>w<cr>', { desc = 'Save' })
+-- vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd>w<cr>', { desc = 'Save' })
