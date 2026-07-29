@@ -42,6 +42,8 @@ vim.pack.add({
   -- TODO: remove this dependency after the setup is working as I want.
   -- The only reason I'm using it is to ensure a few binaries are available.
   { src = 'https://github.com/mason-org/mason-lspconfig.nvim' },
+  -- Anoying config file diagnostics
+  { src = 'https://github.com/folke/lazydev.nvim' },
 })
 
 -- ## Plugin configuration
@@ -84,6 +86,7 @@ local function treesitter_try_attach(buf, lang)
 end
 
 -- # Autocommands
+-- Highlight yank
 vim.api.nvim_create_autocmd('TextYankPost', {
   desc = 'Highlight copied text',
   group = vim.api.nvim_create_augroup('custom-highlight-yank', { clear = true }),
@@ -93,7 +96,9 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 
 local treesitter = require('nvim-treesitter')
 local available_parsers = treesitter.get_available()
+local group_treesitter = vim.api.nvim_create_augroup("tree-sitter-config", {})
 vim.api.nvim_create_autocmd('FileType', {
+  group = group_treesitter,
   callback = function(args)
     -- Treesitter
     local buf, filetype = args.buf, args.match
@@ -118,6 +123,22 @@ vim.api.nvim_create_autocmd('FileType', {
       -- available from `nvim-treesitter`
       treesitter_try_attach(buf, language)
     end
+  end,
+})
+
+local group_lazydev = vim.api.nvim_create_augroup('lazydev-config', {})
+vim.api.nvim_create_autocmd('FileType', {
+  group = group_lazydev,
+  pattern = 'lua',
+  callback = function(_)
+    require('lazydev').setup({
+      library = {
+        {
+          path = "${3rd}/luv/library",
+          words = { "vim%.uv" },
+        },
+      },
+    })
   end,
 })
 
