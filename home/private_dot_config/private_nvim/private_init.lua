@@ -100,6 +100,12 @@ vim.pack.add({
   -- Plugin
   { src = 'https://github.com/lewis6991/gitsigns.nvim' },
   { src = 'https://github.com/kdheepak/lazygit.nvim' },
+  -- Key hints
+  -- Dependencies (optional)
+  { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
+  { src = 'https://github.com/nvim-mini/mini.icons' },
+  -- Plugin
+  { src = 'https://github.com/folke/which-key.nvim' },
 })
 
 -- ## Plugin configuration
@@ -305,6 +311,11 @@ require('conform').setup({
     lsp_format = 'fallback',
     timeout_ms = 500,
   },
+})
+
+-- Key hints
+require('which-key').setup({
+  preset = 'helix',
 })
 
 -- # Helper functions
@@ -577,3 +588,4 @@ vim.keymap.set(
   '<cmd>LazyGit<cr>',
   { desc = 'Open Lazy[G]it' }
 )
+vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd>w<cr>', { desc = 'Save' })
