@@ -31,10 +31,17 @@ vim.opt.spelllang      = "en,pt"       -- Languages to use in spell checking
 
 -- # Plugins
 vim.pack.add({
-  -- ## Colorscheme
+  --  Colorscheme
   { src = "https://github.com/ray-x/starry.nvim" },
-  -- ## Treesitter
+  --  Treesitter
   { src = "https://github.com/nvim-treesitter/nvim-treesitter" },
+  -- LSP
+  { src = 'https://github.com/neovim/nvim-lspconfig' },
+  -- Mason (LSPs, formatters, debuggers, etc)
+  { src = 'https://github.com/mason-org/mason.nvim' },
+  -- TODO: remove this dependency after the setup is working as I want.
+  -- The only reason I'm using it is to ensure a few binaries are available.
+  { src = 'https://github.com/mason-org/mason-lspconfig.nvim' },
 })
 
 -- ## Plugin configuration
@@ -53,7 +60,10 @@ local parsers = {
   'query', 'vim', 'vimdoc', 'ruby',
 }
 require('nvim-treesitter').install(parsers)
-
+require("mason").setup()
+require("mason-lspconfig").setup({
+  ensure_installed = { "lua_ls", },
+})
 
 -- # Helper functions
 local function treesitter_try_attach(buf, lang)
