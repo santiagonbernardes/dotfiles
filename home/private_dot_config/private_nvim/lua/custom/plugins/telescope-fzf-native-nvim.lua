@@ -1,4 +1,4 @@
-local helper = require('custom.plugins._pack-helpers')
+local helper = require('custom.helpers.plugins')
 local name = 'telescope-fzf-native.nvim'
 
 ---@type Plugin

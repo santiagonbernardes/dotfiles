@@ -45,7 +45,7 @@ local plugin = {
   configure = function() require('nvim-treesitter').install(parsers) end,
 }
 
-require('custom.plugins._pack-helpers').add_on_change_upinstall_autocmd(
+require('custom.helpers.plugins').add_on_change_upinstall_autocmd(
   'nvim-treesitter',
   function(event)
     if not event.data.active then vim.cmd.packadd('nvim-treesitter') end
