@@ -6,67 +6,57 @@ local M = {}
 ---@field optional? Plugin[]
 ---@field configure? fun()
 
----@param filename string
+---@param file_name string
 ---@param type string
 ---@return boolean
-local function is_plugin(filename, type)
-  return (type == 'file' or type == 'link')
-    and filename:match('%.lua$')
-    and filename ~= 'init.lua'
+local function is_plugin(file_name, type)
+  if not vim.tbl_contains({ 'file', 'link' }, type) then return false end
+
+  if file_name:match('%.lua$') then
+    return file_name:sub(1, 1) ~= '_' and file_name ~= 'init.lua'
+  end
+
+  return false
 end
 
 ---@return Plugin[]
 local function get_plugins()
-  local plugins = {}
-
   local plugins_dir =
     vim.fs.joinpath(vim.fn.stdpath('config'), 'lua', 'custom', 'plugins')
 
-  for file_name, type in vim.fs.dir(plugins_dir, { follow = true }) do
-    if is_plugin(file_name, type) then
-      local module = file_name:gsub('%.lua$', '')
-      table.insert(plugins, require('custom.plugins.' .. module))
-    end
-  end
-
-  return plugins
+  return vim
+    .iter(vim.fs.dir(plugins_dir, { follow = true }))
+    :filter(function(file_name, type) return is_plugin(file_name, type) end)
+    :map(
+      function(file_name, _)
+        return require('custom.plugins.' .. file_name:gsub('%.lua$', ''))
+      end
+    )
+    :totable()
 end
 
 ---@return vim.pack.Spec[]
 M.get_specs = function()
-  local specs = {}
-  local added = {}
-
-  ---@param plugin Plugin
-  local add_if_absent = function(plugin)
-    local spec = plugin.spec
-    local src = spec.src
-    if not added[src] then
-      table.insert(specs, spec)
-      added[src] = true
-    end
-  end
-
-  for _, plugin in ipairs(get_plugins()) do
-    if not added[plugin.spec.src] then add_if_absent(plugin) end
-
-    for _, dependency_plugin in ipairs(plugin.dependencies or {}) do
-      add_if_absent(dependency_plugin)
-    end
-
-    for _, optional_plugin in ipairs(plugin.optional or {}) do
-      add_if_absent(optional_plugin)
-    end
-  end
-
-  return specs
+  return vim
+    .iter(get_plugins())
+    :map(
+      function(plugin)
+        return {
+          plugin,
+          unpack(plugin.dependencies or {}),
+          unpack(plugin.optional or {}),
+        }
+      end
+    )
+    :flatten()
+    :map(function(plugin) return plugin.spec end)
+    :unique(function(spec) return spec.src end)
+    :totable()
 end
 
 M.configure = function()
   for _, plugin in ipairs(get_plugins()) do
-    if plugin.configure then
-      plugin.configure()
-    end
+    if plugin.configure then plugin.configure() end
   end
 end
 
