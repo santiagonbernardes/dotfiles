@@ -1,3 +1,4 @@
+local file_helper = require('custom.helpers.file')
 local M = {}
 
 ---@class Plugin
@@ -6,32 +7,17 @@ local M = {}
 ---@field optional? Plugin[]
 ---@field configure? fun()
 
----@param file_name string
----@param type string
----@return boolean
-local function is_plugin(file_name, type)
-  if not vim.tbl_contains({ 'file', 'link' }, type) then return false end
-
-  if file_name:match('%.lua$') then
-    return file_name:sub(1, 1) ~= '_' and file_name ~= 'init.lua'
-  end
-
-  return false
-end
-
 ---@return Plugin[]
 local function get_plugins()
   local plugins_dir =
     vim.fs.joinpath(vim.fn.stdpath('config'), 'lua', 'custom', 'plugins')
 
   return vim
-    .iter(vim.fs.dir(plugins_dir, { follow = true }))
-    :filter(function(file_name, type) return is_plugin(file_name, type) end)
-    :map(
-      function(file_name, _)
-        return require('custom.plugins.' .. file_name:gsub('%.lua$', ''))
-      end
-    )
+    .iter(file_helper.get_modules_file_names(plugins_dir))
+    :map(function(file_name)
+      local module_name = file_name:gsub('%.lua$', '')
+      return require(('custom.plugins.%s'):format(module_name))
+    end)
     :totable()
 end
 
