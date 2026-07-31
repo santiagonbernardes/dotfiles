@@ -1,12 +1,12 @@
 {
   "plugins": {
     "blink.cmp": {
-      "rev": "dbcf63b90b358f058637ea370202e3849013383b",
+      "rev": "005f8c859997f40f65bfbec5f4b400c45fecc06a",
       "src": "https://github.com/saghen/blink.cmp",
       "version": "'main'"
     },
     "blink.lib": {
-      "rev": "2789206e10a0e4880f808c2aaf52bc57d876b481",
+      "rev": "8b04d0e0acc8565cfa4dd291a89a9212b7262633",
       "src": "https://github.com/saghen/blink.lib",
       "version": "'main'"
     },
@@ -51,7 +51,7 @@
       "version": "'master'"
     },
     "mason-lspconfig.nvim": {
-      "rev": "7adc933dabcc7c86ae6b07aff7ee68eac398491f",
+      "rev": "a5671269a1ddfa7790cdf97c14e600e269da550f",
       "src": "https://github.com/mason-org/mason-lspconfig.nvim",
       "version": "2.0.0 - 3.0.0"
     },
@@ -71,7 +71,7 @@
       "version": "3.0.0 - 4.0.0"
     },
     "nui.nvim": {
-      "rev": "de740991c12411b663994b2860f1a4fd0937c130",
+      "rev": "f535005e6ad1016383f24e39559833759453564e",
       "src": "https://github.com/MunifTanjim/nui.nvim",
       "version": "0.0.0 - 1.0.0"
     },
@@ -81,12 +81,12 @@
       "version": "'master'"
     },
     "nvim-lspconfig": {
-      "rev": "b7b920947f21339ee41fbb38c79d6445e12900aa",
+      "rev": "b89138d9af0a96e6048e202a15765fc6b6416bd4",
       "src": "https://github.com/neovim/nvim-lspconfig",
       "version": "2.0.0 - 3.0.0"
     },
     "nvim-treesitter": {
-      "rev": "61df84986b4b4ec469ee745a182e433d49f8c27e",
+      "rev": "0f32dff7f19476629c77467f887b95e5e2d33509",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
       "version": "'main'"
     },
@@ -126,7 +126,7 @@
       "version": "'master'"
     },
     "which-key.nvim": {
-      "rev": "3aab2147e74890957785941f0c1ad87d0a44c15a",
+      "rev": "fcbf4eea17cb299c02557d576f0d568878e354a4",
       "src": "https://github.com/folke/which-key.nvim",
       "version": "3.0.0 - 4.0.0"
     }
