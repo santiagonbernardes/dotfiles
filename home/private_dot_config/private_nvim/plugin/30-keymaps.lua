@@ -54,36 +54,6 @@ vim.keymap.set(
   function() neotree.execute({ toggle = true }) end,
   { desc = 'Open File [E]xplorer' }
 )
-vim.keymap.set(
-  'n',
-  '<c-h>',
-  '<cmd><C-U>TmuxNavigateLeft<cr>',
-  { desc = 'Move to the left pane/window' }
-)
-vim.keymap.set(
-  'n',
-  '<c-j>',
-  '<cmd><C-U>TmuxNavigateDown<cr>',
-  { desc = 'Move to the pane/window below' }
-)
-vim.keymap.set(
-  'n',
-  '<c-k>',
-  '<cmd><C-U>TmuxNavigateUp<cr>',
-  { desc = 'Move to the pane/window above' }
-)
-vim.keymap.set(
-  'n',
-  '<c-l>',
-  '<cmd><C-U>TmuxNavigateRight<cr>',
-  { desc = 'Move to the right pane/window' }
-)
-vim.keymap.set(
-  'n',
-  '<c-\\>',
-  '<cmd><C-U>TmuxNavigatePrevious<cr>',
-  { desc = 'Move to the previous pane/window' }
-)
 
 vim.keymap.set(
   'n',
@@ -115,4 +85,3 @@ vim.keymap.set(
   '<cmd>LazyGit<cr>',
   { desc = 'Open Lazy[G]it' }
 )
--- vim.keymap.set({ 'n', 'i', 'v' }, '<C-s>', '<cmd>w<cr>', { desc = 'Save' })
