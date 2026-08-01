@@ -1,20 +1,5 @@
 {
   "plugins": {
-    "actions-preview.nvim": {
-      "rev": "0ac9c2aa3cfc8c885321c0862b50b6b1c3392405",
-      "src": "https://github.com/aznhe21/actions-preview.nvim",
-      "version": "'master'"
-    },
-    "blink.cmp": {
-      "rev": "005f8c859997f40f65bfbec5f4b400c45fecc06a",
-      "src": "https://github.com/saghen/blink.cmp",
-      "version": "'main'"
-    },
-    "blink.lib": {
-      "rev": "8b04d0e0acc8565cfa4dd291a89a9212b7262633",
-      "src": "https://github.com/saghen/blink.lib",
-      "version": "'main'"
-    },
     "bufferline.nvim": {
       "rev": "655133c3b4c3e5e05ec549b9f8cc2894ac6f51b3",
       "src": "https://github.com/akinsho/bufferline.nvim",
@@ -55,19 +40,24 @@
       "src": "https://github.com/nvim-lualine/lualine.nvim",
       "version": "'master'"
     },
-    "mason-lspconfig.nvim": {
-      "rev": "a5671269a1ddfa7790cdf97c14e600e269da550f",
-      "src": "https://github.com/mason-org/mason-lspconfig.nvim",
-      "version": "2.0.0 - 3.0.0"
-    },
     "mason.nvim": {
       "rev": "2a6940af80375532e5e9e7c1f2fc6319a1b7a69d",
       "src": "https://github.com/mason-org/mason.nvim",
       "version": "2.0.0 - 3.0.0"
     },
+    "mini.extra": {
+      "rev": "9c6affac2b176142f48b185bd7abc5db7ec20ac8",
+      "src": "https://github.com/nvim-mini/mini.extra",
+      "version": "'main'"
+    },
     "mini.icons": {
       "rev": "98faae31e9be1cc054ae63485e58ceb185efcad0",
       "src": "https://github.com/nvim-mini/mini.icons",
+      "version": "'main'"
+    },
+    "mini.pick": {
+      "rev": "04e73ab07222508361095bb6e27621b315e6b9f1",
+      "src": "https://github.com/nvim-mini/mini.pick",
       "version": "'main'"
     },
     "neo-tree.nvim": {
@@ -113,16 +103,6 @@
     "tabout.nvim": {
       "rev": "9a3499480a8e53dcaa665e2836f287e3b7764009",
       "src": "https://github.com/abecodes/tabout.nvim",
-      "version": "'master'"
-    },
-    "telescope-fzf-native.nvim": {
-      "rev": "b25b749b9db64d375d782094e2b9dce53ad53a40",
-      "src": "https://github.com/nvim-telescope/telescope-fzf-native.nvim",
-      "version": "'main'"
-    },
-    "telescope.nvim": {
-      "rev": "427b576c16792edad01a92b89721d923c19ad60f",
-      "src": "https://github.com/nvim-telescope/telescope.nvim",
       "version": "'master'"
     },
     "vim-tmux-navigator": {

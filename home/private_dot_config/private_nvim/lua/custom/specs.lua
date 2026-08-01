@@ -1,40 +1,48 @@
-local M = {}
-M.nvim_web_devicons = {
-  src = 'https://github.com/nvim-tree/nvim-web-devicons',
-  version = 'master',
-}
+---@class Specs
+---@field nvim_web_devicons vim.pack.Spec
+---@field mason_nvim vim.pack.Spec
+---@field plenary_nvim vim.pack.Spec
+---@field mini_icons vim.pack.Spec
+---@field nui_nvim vim.pack.Spec
+---@field nvim_treesitter vim.pack.Spec
+---@field mini_extra vim.pack.Spec
 
-M.mason_nvim = {
-  src = 'https://github.com/mason-org/mason.nvim',
-  version = vim.version.range('2'),
-}
+---@type Specs
+local M = {
+  nvim_web_devicons = {
+    src = 'https://github.com/nvim-tree/nvim-web-devicons',
+    version = 'master',
+  },
 
-M.plenary_nvim = {
-  src = 'https://github.com/nvim-lua/plenary.nvim',
-  version = 'master',
-}
+  mason_nvim = {
+    src = 'https://github.com/mason-org/mason.nvim',
+    version = vim.version.range('2'),
+  },
 
-M.mini_icons =
-  { src = 'https://github.com/nvim-mini/mini.icons', version = 'main' }
+  plenary_nvim = {
+    src = 'https://github.com/nvim-lua/plenary.nvim',
+    version = 'master',
+  },
 
-M.nui_nvim = {
-  src = 'https://github.com/MunifTanjim/nui.nvim',
-  version = vim.version.range('0'),
-}
+  mini_icons = {
+    src = 'https://github.com/nvim-mini/mini.icons',
+    version = 'main',
+  },
 
-M.nvim_treesitter = {
-  src = 'https://github.com/nvim-treesitter/nvim-treesitter',
-  version = 'main',
-}
+  nui_nvim = {
+    src = 'https://github.com/MunifTanjim/nui.nvim',
+    version = vim.version.range('0'),
+  },
 
-M.telescope_fzf_native = {
-  src = 'https://github.com/nvim-telescope/telescope-fzf-native.nvim',
-  version = 'main',
-}
+  nvim_treesitter = {
+    src = 'https://github.com/nvim-treesitter/nvim-treesitter',
+    version = 'main',
+  },
 
-M.telescope = {
-  src = 'https://github.com/nvim-telescope/telescope.nvim',
-  version = 'master',
+  mini_extra = {
+    src = 'https://github.com/nvim-mini/mini.extra',
+    version = 'main',
+  },
 }
 
 return M

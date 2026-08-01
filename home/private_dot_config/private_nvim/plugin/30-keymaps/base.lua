@@ -1,4 +1,3 @@
-local telescope = require('telescope.builtin')
 local neotree = require('neo-tree.command')
 
 vim.keymap.set(
@@ -58,32 +57,32 @@ vim.keymap.set(
 vim.keymap.set(
   'n',
   '<leader>ff',
-  telescope.find_files,
+  MiniPick.builtin.files,
   { desc = '[F]ind [F]iles' }
 )
 vim.keymap.set(
   'n',
   '<leader>fg',
-  telescope.live_grep,
+  MiniPick.builtin.grep_live,
   { desc = '[F]ind with [G]rep' }
 )
 vim.keymap.set(
   'n',
   '<leader>fb',
-  telescope.buffers,
+  MiniPick.builtin.buffers,
   { desc = '[F]ind in [B]uffers' }
 )
 vim.keymap.set(
   'n',
   '<leader>fh',
-  telescope.help_tags,
+  MiniPick.builtin.help,
   { desc = '[F]ind in [H]elp' }
 )
 
 vim.keymap.set(
   'n',
   '<leader>fk',
-  telescope.keymaps,
+  MiniExtra.pickers.keymaps,
   { desc = '[f]ind in [k]eymaps' }
 )
 
