@@ -47,17 +47,22 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end
 
     if client:supports_method('textDocument/completion', buffer_id) then
-      -- OK check this auto trigger thingy
+      -- OK
+      -- Optional: trigger autocompletion on EVERY keypress. May be slow!
+      client.server_capabilities.completionProvider.triggerCharacters = vim
+        .iter(vim.fn.range(32, 126))
+        :map(function(char_byte) return string.char(char_byte) end)
+        :totable()
+
       vim.lsp.completion.enable(
         true,
         client.id,
-        buffer_id
-        -- { autotrigger = true }
+        buffer_id,
+        { autotrigger = true }
       )
     end
 
     if client:supports_method('textDocument/documentColor', buffer_id) then
-      --- OK
       vim.lsp.document_color.enable(
         true,
         { client_id = client_id, bufnr = buffer_id }
