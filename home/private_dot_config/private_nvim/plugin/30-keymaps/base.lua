@@ -1,5 +1,3 @@
-local neotree = require('neo-tree.command')
-
 vim.keymap.set(
   'n',
   '<Esc>',
@@ -50,7 +48,7 @@ vim.keymap.set('n', 'N', 'Nzzzv')
 vim.keymap.set(
   'n',
   '<leader>e',
-  function() neotree.execute({ toggle = true }) end,
+  function() require('oil').open_float() end,
   { desc = 'Open File [E]xplorer' }
 )
 
