@@ -54,6 +54,11 @@
       "src": "https://github.com/nvim-mini/mini.icons",
       "version": "'main'"
     },
+    "mini.input": {
+      "rev": "957991e29b060dd74aad0b4098993dad313e09fa",
+      "src": "https://github.com/nvim-mini/mini.input",
+      "version": "'main'"
+    },
     "mini.pick": {
       "rev": "04e73ab07222508361095bb6e27621b315e6b9f1",
       "src": "https://github.com/nvim-mini/mini.pick",
