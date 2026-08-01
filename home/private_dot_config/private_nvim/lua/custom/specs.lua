@@ -32,4 +32,9 @@ M.telescope_fzf_native = {
   version = 'main',
 }
 
+M.telescope = {
+  src = 'https://github.com/nvim-telescope/telescope.nvim',
+  version = 'master',
+}
+
 return M

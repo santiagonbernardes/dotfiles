@@ -79,6 +79,14 @@ vim.keymap.set(
   telescope.help_tags,
   { desc = '[F]ind in [H]elp' }
 )
+
+vim.keymap.set(
+  'n',
+  '<leader>fk',
+  telescope.keymaps,
+  { desc = '[f]ind in [k]eymaps' }
+)
+
 vim.keymap.set(
   'n',
   '<leader>gg',

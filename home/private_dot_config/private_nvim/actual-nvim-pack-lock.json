@@ -1,5 +1,10 @@
 {
   "plugins": {
+    "actions-preview.nvim": {
+      "rev": "0ac9c2aa3cfc8c885321c0862b50b6b1c3392405",
+      "src": "https://github.com/aznhe21/actions-preview.nvim",
+      "version": "'master'"
+    },
     "blink.cmp": {
       "rev": "005f8c859997f40f65bfbec5f4b400c45fecc06a",
       "src": "https://github.com/saghen/blink.cmp",
