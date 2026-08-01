@@ -64,6 +64,11 @@
       "src": "https://github.com/nvim-mini/mini.pick",
       "version": "'main'"
     },
+    "mini.surround": {
+      "rev": "8d5d0c5aa92449368ac251e85451d79d8f69d296",
+      "src": "https://github.com/nvim-mini/mini.surround",
+      "version": "'main'"
+    },
     "nui.nvim": {
       "rev": "f535005e6ad1016383f24e39559833759453564e",
       "src": "https://github.com/MunifTanjim/nui.nvim",
