@@ -4,8 +4,8 @@ require('custom.helpers.lsp').on_attach(
     vim.keymap.set(
       { 'n', 'v' },
       'grd',
-      MiniExtra.pickers.diagnostics,
-      { desc = 'go to [d]iagnostics', buf = bufnr }
+      MiniExtra.pickers.diagnostic,
+      { desc = 'go to [d]iagnostic', buf = bufnr }
     )
   end
 )

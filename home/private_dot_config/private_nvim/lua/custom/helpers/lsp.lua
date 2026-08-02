@@ -1,7 +1,6 @@
 local notify_helper = require('custom.helpers.notify')
 
 local M = {}
-
 --- Helper to handle client validation
 --- @param method vim.lsp.protocol.Method.ClientToServer | vim.lsp.protocol.Method.Registration
 --- @param config_function fun(client: vim.lsp.Client, bufnr?: integer)
