@@ -35,7 +35,7 @@ M.run_system_command = function(caller, command, working_directory)
     local stdout = result.stdout or ''
     local output = stderr ~= '' and stderr or stdout
     if output == '' then output = 'No output from system command.' end
-    vim.notify(
+    require('custom.helpers.notify').schedule_notify(
       ('Failed to run the system command "%s" for caller %s:\n%s'):format(
         table.concat(command, ' '),
         caller,
