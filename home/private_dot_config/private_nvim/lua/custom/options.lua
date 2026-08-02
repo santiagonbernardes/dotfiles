@@ -1,5 +1,3 @@
-vim.loader.enable() -- Faster startup by caching compiled Lua modules
-
 vim.opt.mouse = 'a' -- Enables mouse
 vim.opt.number = true -- Show line number
 vim.opt.relativenumber = true -- Show relative number
