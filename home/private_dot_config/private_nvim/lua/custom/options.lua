@@ -29,8 +29,7 @@ vim.opt.fillchars = 'eob: ,fold:╌' -- Replace symbols on fold and end of buffe
 
 -- built-in autocompletion
 vim.opt.autocomplete = true
--- TODO: review these options
-vim.opt.completeopt = { 'menu', 'menuone', 'noinsert', 'fuzzy', 'popup' }
+vim.opt.completeopt = { 'menuone', 'noselect', 'popup', 'fuzzy' }
 vim.opt.pumborder = 'rounded'
 vim.opt.complete = {
   'o', -- Omnifunc (LSP),

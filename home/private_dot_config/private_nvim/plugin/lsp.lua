@@ -3,4 +3,5 @@ vim.lsp.enable({
   'pyright',
   'ruff',
   'ansiblels',
+  'rust_analyzer',
 })
