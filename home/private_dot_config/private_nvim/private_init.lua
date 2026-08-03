@@ -1,3 +1,9 @@
--- bootstrap lazy.nvim, LazyVim and your plugins
-require("config.lazy")
-vim.env.PATH = vim.env.HOME .. "/.local/share/mise/shims:" .. vim.env.PATH
+vim.loader.enable() -- Faster startup by caching compiled Lua modules
+
+-- NOTE: leader mapping is set here to prevent conflict with plugins
+vim.g.mapleader = ' ' -- Maps <space> to leader
+vim.g.maplocalleader = '\\' -- Maps localleader to \
+
+require('custom.options')
+require('custom.diagnostics')
+require('custom.autocmds')
